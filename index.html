@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>North to Perfect Detailing</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#181c24; --panel2:#1f2530; --line:#2c3442;
+    --ink:#eef2f8; --muted:#9aa6b8; --brand:#3b82f6; --brand2:#2563eb;
+    --good:#22c55e; --warn:#f59e0b; --danger:#ef4444; --radius:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:17px;line-height:1.4;-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#141821,#10141c);
+    border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:12px}
+  header .logo{width:36px;height:36px;border-radius:9px;background:var(--brand);
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px}
+  header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
+  header small{display:block;color:var(--muted);font-weight:500;font-size:12px}
+  header .who{margin-left:auto;font-size:12px;color:var(--muted);text-align:right}
+  header .who b{color:var(--ink);display:block}
+  .wrap{max-width:780px;margin:0 auto;padding:16px;padding-bottom:120px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row > *{flex:1;min-width:140px}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 5px;font-weight:600;letter-spacing:.2px}
+  input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);
+    color:var(--ink);padding:12px 13px;border-radius:11px;font-size:16px;font-family:inherit}
+  textarea{resize:vertical;min-height:60px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin:14px 0}
+  .card h2{margin:0 0 4px;font-size:16px}
+  .card .sub{color:var(--muted);font-size:13px;margin-bottom:6px}
+  .btn{appearance:none;border:none;border-radius:12px;padding:14px 18px;font-size:16px;font-weight:700;color:#fff;background:var(--brand);cursor:pointer;font-family:inherit}
+  .btn:active{transform:translateY(1px)}
+  .btn.sec{background:var(--panel2);border:1px solid var(--line);color:var(--ink)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+  .btn.danger{background:var(--danger)}
+  .btn.good{background:var(--good)}
+  .btn.full{width:100%}
+  .btn.sm{padding:9px 12px;font-size:14px;border-radius:10px}
+  .stack{display:flex;flex-direction:column;gap:10px}
+  /* checkbox chips */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .chip{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:var(--panel2);cursor:pointer;font-size:14.5px;user-select:none}
+  .chip .bx{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
+  .chip.on{border-color:var(--brand);background:#172033}
+  .chip.on .bx{background:var(--brand);border-color:var(--brand)}
+  .chip.warnish.on{border-color:var(--warn);background:#241c0c}
+  .chip.warnish.on .bx{background:var(--warn);border-color:var(--warn)}
+  /* service rows */
+  .svc{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);margin:8px 0;cursor:pointer}
+  .svc.on{border-color:var(--brand);background:#172033}
+  .svc.disabled{opacity:.5}
+  .svc .box{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff}
+  .svc.on .box{background:var(--brand);border-color:var(--brand)}
+  .svc .name{font-weight:600}
+  .svc .desc{color:var(--muted);font-size:12.5px}
+  .svc .price{margin-left:auto;font-weight:700;white-space:nowrap;text-align:right}
+  .svc .price small{display:block;color:var(--muted);font-weight:500;font-size:11px}
+  .total{display:flex;justify-content:space-between;align-items:center;font-size:20px;font-weight:800;padding:14px;border-top:1px dashed var(--line);margin-top:8px}
+  .total .strike{color:var(--muted);font-weight:600;font-size:14px;text-decoration:line-through;margin-right:8px}
+  .tabbar{position:fixed;bottom:0;left:0;right:0;background:#10141c;border-top:1px solid var(--line);display:flex;z-index:20}
+  .tabbar button{flex:1;background:none;border:none;color:var(--muted);padding:9px 4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+  .tabbar button .ic{display:block;font-size:20px;margin-bottom:2px}
+  .tabbar button.on{color:var(--brand)}
+  .joblist .job{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:10px 0;cursor:pointer}
+  .joblist .job:active{background:var(--panel2)}
+  .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px}
+  .pill.open{background:#3a2e12;color:var(--warn)}
+  .pill.done{background:#10331d;color:var(--good)}
+  .pill.prog{background:#10243a;color:#5aa9ff}
+  .job .meta{flex:1;min-width:0}
+  .job .meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .job .meta span{color:var(--muted);font-size:13px}
+  .sigwrap{border:1px solid var(--line);border-radius:12px;background:#fff;touch-action:none;position:relative}
+  .sigwrap canvas{display:block;width:100%;height:170px;border-radius:12px}
+  .sigwrap .hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#9aa6b8;font-size:14px;pointer-events:none}
+  .legal{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:13px;font-size:12.5px;color:#cdd6e4;max-height:280px;overflow:auto;line-height:1.55}
+  .legal h4{margin:12px 0 4px;font-size:13px;color:#fff}
+  .legal p{margin:6px 0}
+  .photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .photos .ph{width:84px;height:84px;border-radius:10px;object-fit:cover;border:1px solid var(--line)}
+  .hidden{display:none!important}
+  .step-head{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
+  .step-head .n{color:var(--muted);font-size:13px;font-weight:600}
+  .progress{height:5px;background:var(--panel2);border-radius:999px;overflow:hidden;margin-bottom:14px}
+  .progress > div{height:100%;background:var(--brand);transition:width .25s}
+  .navbtns{display:flex;gap:10px;margin-top:18px}
+  .navbtns .btn{flex:1}
+  .muted{color:var(--muted)}
+  .right{text-align:right}.center{text-align:center}
+  .empty{text-align:center;color:var(--muted);padding:50px 16px}
+  .empty .big{font-size:46px;margin-bottom:8px}
+  .kv{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px;gap:10px}
+  .kv span:first-child{color:var(--muted);flex:0 0 auto}
+  .kv span:last-child{text-align:right}
+  .sizebtns{display:flex;gap:8px;margin-top:6px}
+  .sizebtns .sb{flex:1;text-align:center;padding:12px 8px;border:1px solid var(--line);border-radius:11px;background:var(--panel2);cursor:pointer}
+  .sizebtns .sb.on{border-color:var(--brand);background:#172033}
+  .sizebtns .sb b{display:block;font-size:14px}
+  .sizebtns .sb small{color:var(--muted);font-size:11px}
+  .auto{display:inline-block;font-size:11px;background:#10243a;color:#5aa9ff;padding:2px 8px;border-radius:999px;margin-left:6px}
+  .matrix{width:100%;border-collapse:collapse;font-size:14px}
+  .matrix th,.matrix td{border:1px solid var(--line);padding:6px;text-align:center}
+  .matrix th{color:var(--muted);font-weight:600;font-size:12px}
+  .matrix td input{padding:8px;text-align:center}
+  .matrix td:first-child{text-align:left;color:var(--ink)}
+  .qc{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);margin:6px 0;cursor:pointer}
+  .qc .bx{width:22px;height:22px;border-radius:6px;border:2px solid var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff}
+  .qc.on{border-color:var(--good);background:#10241a}
+  .qc.on .bx{background:var(--good);border-color:var(--good)}
+  .lock{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px}
+  .lock .pad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;margin-top:18px}
+  .lock .pad button{width:72px;height:72px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:24px;font-weight:700;cursor:pointer}
+  .lock .dots{display:flex;gap:14px;margin-top:18px}
+  .lock .dots i{width:14px;height:14px;border-radius:50%;background:var(--panel2);border:1px solid var(--line)}
+  .lock .dots i.on{background:var(--brand);border-color:var(--brand)}
+  .userpick{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px}
+  .userpick .u{padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);cursor:pointer;font-weight:600}
+  .banner{background:#241c0c;border:1px solid #5a4410;color:#f5d99a;border-radius:11px;padding:10px 12px;font-size:13px;margin:8px 0}
+  @media print{
+    header,.tabbar,.no-print{display:none!important}
+    body{background:#fff;color:#000}
+    .wrap{padding:0;max-width:100%}
+    .card{border:1px solid #ccc;break-inside:avoid;box-shadow:none}
+    .legal{max-height:none;color:#000}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOCK / LOGIN ===== -->
+<div id="lock" class="lock hidden">
+  <div class="logo" id="lockLogo" style="width:64px;height:64px;border-radius:14px;background:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;overflow:hidden">NTP</div>
+  <h2 style="margin:14px 0 2px">North to Perfect Detailing</h2>
+  <div class="muted" id="lockMsg">Who's working?</div>
+  <div id="userPick" class="userpick"></div>
+  <div id="pinArea" class="hidden center">
+    <div class="dots" id="pinDots"><i></i><i></i><i></i><i></i></div>
+    <div class="pad">
+      <button onclick="pinTap('1')">1</button><button onclick="pinTap('2')">2</button><button onclick="pinTap('3')">3</button>
+      <button onclick="pinTap('4')">4</button><button onclick="pinTap('5')">5</button><button onclick="pinTap('6')">6</button>
+      <button onclick="pinTap('7')">7</button><button onclick="pinTap('8')">8</button><button onclick="pinTap('9')">9</button>
+      <button onclick="pinBack()">⌫</button><button onclick="pinTap('0')">0</button><button onclick="pinCancel()">✕</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo" id="hdrLogo">NTP</div>
+  <div>
+    <h1 id="hdrName">North to Perfect Detailing</h1>
+    <small id="hdrSub">Sanbornton, NH</small>
+  </div>
+  <div class="who" id="whoami"></div>
+</header>
+
+<div class="wrap">
+  <!-- ===== JOBS LIST ===== -->
+  <section id="view-jobs">
+    <div class="row" style="align-items:center">
+      <h2 style="margin:6px 0">Jobs</h2>
+      <div class="right" style="flex:0 0 auto"><button class="btn" onclick="startNewJob()">+ New Job</button></div>
+    </div>
+    <div id="jobListEmpty" class="empty"><div class="big">🚗</div>No jobs yet.<br>Tap <b>+ New Job</b> to start.</div>
+    <div id="jobList" class="joblist"></div>
+  </section>
+
+  <!-- ===== NEW / EDIT JOB ===== -->
+  <section id="view-job" class="hidden">
+    <div class="progress"><div id="prog"></div></div>
+    <div class="step-head">
+      <button class="btn ghost sm no-print" onclick="cancelJob()">✕</button>
+      <div><div id="stepTitle" style="font-weight:700;font-size:18px"></div><div class="n" id="stepCount"></div></div>
+    </div>
+
+    <!-- Step 1: Customer -->
+    <div class="step" data-step="0">
+      <div class="card">
+        <label>Returning customer? Search name or phone</label>
+        <input id="custSearch" placeholder="Start typing…" autocomplete="off" oninput="searchCustomers()">
+        <div id="custResults"></div>
+        <label>Customer name</label><input id="c_name" placeholder="Full name">
+        <div class="row">
+          <div><label>Phone</label><input id="c_phone" type="tel" placeholder="(603) 555-0123"></div>
+          <div><label>Email</label><input id="c_email" type="email" placeholder="name@email.com"></div>
+        </div>
+        <label>Address</label><input id="c_addr" placeholder="Street, town">
+        <label>How did you hear about us?</label>
+        <div class="chips" id="refChips"></div>
+        <label>New customer? (applies discount)</label>
+        <div class="chips"><div class="chip" id="chip_newcust" onclick="toggleNewCust()"><div class="bx"></div><span id="newCustLbl">New customer discount</span></div></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Vehicle -->
+    <div class="step hidden" data-step="1">
+      <div class="card">
+        <div class="row">
+          <div><label>Year</label><input id="v_year" inputmode="numeric" placeholder="2021"></div>
+          <div><label>Make</label><input id="v_make" placeholder="Toyota" oninput="autoCat()" list="makelist"></div>
+          <div><label>Model</label><input id="v_model" placeholder="RAV4" oninput="autoCat()"></div>
+        </div>
+        <datalist id="makelist"></datalist>
+        <label>Vehicle size <span id="sizeAuto" class="auto hidden">auto-detected</span></label>
+        <div class="sizebtns" id="sizeBtns"></div>
+        <div class="row">
+          <div><label>Color</label><input id="v_color" placeholder="Black"></div>
+          <div><label>Plate / State</label><input id="v_plate" placeholder="ABC123 NH"></div>
+        </div>
+        <div class="row">
+          <div><label>VIN (optional)</label><input id="v_vin" placeholder="17-digit"></div>
+          <div><label>Odometer</label><input id="v_odo" inputmode="numeric"></div>
+          <div><label>Keys / fobs</label><input id="v_keys" inputmode="numeric" placeholder="1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Condition (checkbox) + photos -->
+    <div class="step hidden" data-step="2">
+      <div class="card">
+        <h2>Interior condition at intake</h2>
+        <div class="sub">Tap everything that applies. Photograph anything notable. Protects you and the customer.</div>
+        <div class="chips" id="condInt"></div>
+      </div>
+      <div class="card" id="condExtCard">
+        <h2>Exterior condition at intake</h2>
+        <div class="sub">For exterior services — tap existing damage.</div>
+        <div class="chips" id="condExt"></div>
+      </div>
+      <div class="card">
+        <label style="margin-top:0">Photos</label>
+        <input id="photoInput" type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(event)">
+        <div id="photos" class="photos"></div>
+        <label>Other notes (optional)</label><textarea id="cond_notes"></textarea>
+      </div>
+      <div class="banner">⚠️ Confirm with customer: all valuables, cash, firearms, and documents removed. Shop is not responsible for items left in the vehicle.</div>
+    </div>
+
+    <!-- Step 4: Services -->
+    <div class="step hidden" data-step="3">
+      <div class="card">
+        <h2>Interior packages</h2><div class="sub">Choose one. Price follows the vehicle size.</div>
+        <div id="svcInterior"></div>
+      </div>
+      <div class="card">
+        <h2>Exterior services</h2><div class="sub">Optional. Prices set in Settings.</div>
+        <div id="svcExterior"></div>
+      </div>
+      <div class="card">
+        <h2>Add-ons</h2>
+        <div id="svcAddons"></div>
+        <label>Notes / custom request</label><textarea id="svc_notes"></textarea>
+        <div class="total"><span>Total</span><span><span id="svcStrike" class="strike hidden"></span><span id="svcTotal">$0</span></span></div>
+        <div class="muted" id="discNote" style="font-size:12px"></div>
+      </div>
+    </div>
+
+    <!-- Step 5: Team checklist (private) -->
+    <div class="step hidden" data-step="4">
+      <div class="card">
+        <h2>Team work checklist <span class="auto">internal — not on customer copy</span></h2>
+        <div class="sub">Check off each step as completed so nothing gets missed.</div>
+        <div id="qcList"></div>
+      </div>
+    </div>
+
+    <!-- Step 6: Authorization + Waiver -->
+    <div class="step hidden" data-step="5">
+      <div class="card">
+        <h2>Service Authorization &amp; Waiver</h2>
+        <div class="sub">Customer reads and signs before work begins.</div>
+        <div class="legal" id="waiverText"></div>
+        <div class="chips" style="margin-top:10px"><div class="chip" id="chip_photoConsent" onclick="togglePhotoConsent()"><div class="bx"></div><span>Customer allows before/after photos for marketing</span></div></div>
+        <label>Customer signature</label>
+        <div class="sigwrap"><canvas id="sig_intake"></canvas><div class="hint" data-for="sig_intake">Sign here with finger</div></div>
+        <button class="btn ghost sm no-print" style="margin-top:8px" onclick="clearSig('sig_intake')">Clear signature</button>
+      </div>
+    </div>
+
+    <!-- Step 7: Delivery (checkbox) -->
+    <div class="step hidden" data-step="6">
+      <div class="card">
+        <h2>Delivery / Completion</h2><div class="sub">Complete at pickup. Tap all that apply.</div>
+        <div class="chips" id="delChips"></div>
+        <label>Concerns at delivery (if any)</label><textarea id="d_concerns"></textarea>
+        <div class="row">
+          <div><label>Payment method</label>
+            <select id="d_pay"><option value="">— select —</option><option>Cash</option><option>Card</option><option>Check</option><option>Venmo/Zelle</option><option>Invoice (QBO)</option></select></div>
+          <div><label>Paid?</label><select id="d_paid"><option>No</option><option>Yes</option></select></div>
+        </div>
+        <label>Customer signature (received vehicle)</label>
+        <div class="sigwrap"><canvas id="sig_delivery"></canvas><div class="hint" data-for="sig_delivery">Sign here with finger</div></div>
+        <button class="btn ghost sm no-print" style="margin-top:8px" onclick="clearSig('sig_delivery')">Clear signature</button>
+      </div>
+    </div>
+
+    <div class="navbtns no-print">
+      <button class="btn sec" id="btnBack" onclick="prevStep()">Back</button>
+      <button class="btn" id="btnNext" onclick="nextStep()">Next</button>
+    </div>
+    <button class="btn good full no-print" id="btnSave" style="margin-top:10px;display:none" onclick="saveJob()">Save &amp; complete job</button>
+    <button class="btn sec full no-print" id="btnSaveDraft" style="margin-top:10px" onclick="saveDraft()">Save draft</button>
+  </section>
+
+  <!-- ===== DETAIL ===== -->
+  <section id="view-detail" class="hidden">
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn ghost sm" onclick="showJobs()">← Jobs</button>
+      <button class="btn sec sm" onclick="editCurrent()">Edit</button>
+      <button class="btn sm" onclick="printCustomer()">Customer PDF</button>
+      <button class="btn sm sec" onclick="printInternal()">Team sheet</button>
+      <button class="btn sm" onclick="emailCurrent()">Email</button>
+    </div>
+    <div id="detailBody"></div>
+    <button class="btn danger full no-print" id="btnDelete" style="margin-top:16px" onclick="deleteCurrent()">Delete job</button>
+  </section>
+
+  <!-- ===== SETTINGS ===== -->
+  <section id="view-settings" class="hidden">
+    <h2>Settings</h2>
+    <div id="settingsLocked" class="banner hidden">Pricing &amp; users are Owner-only. You're signed in as a Tech — viewing is fine, editing is locked.</div>
+
+    <div class="card">
+      <h2>Business</h2>
+      <label>Business name</label><input id="s_name">
+      <label>Address</label><input id="s_addr">
+      <div class="row"><div><label>Phone</label><input id="s_phone"></div><div><label>Email (from)</label><input id="s_email"></div></div>
+      <label>Email source</label><select id="s_emailsrc"><option>Gmail</option><option>QuickBooks</option></select>
+      <label>Logo image URL (or leave for NTP monogram)</label><input id="s_logo" placeholder="https://...">
+    </div>
+
+    <div class="card" id="pricingCard">
+      <h2>Pricing matrix</h2>
+      <div class="sub">Regular price per package &amp; vehicle size. Compact values are from your website; <b>enter Standard &amp; Full-Size</b>.</div>
+      <table class="matrix" id="priceMatrix"></table>
+      <label style="margin-top:12px">New-customer discount (%)</label>
+      <input id="s_discount" inputmode="decimal" placeholder="e.g. 10">
+      <div class="muted" style="font-size:12px">Your site currently shows ~20% off compact. Set the real number you want the app to use.</div>
+    </div>
+
+    <div class="card" id="usersCard">
+      <h2>Team &amp; permissions</h2>
+      <div class="sub">Owners manage pricing, settings, reports &amp; delete. Techs run jobs only.</div>
+      <div id="userList"></div>
+      <div class="row" style="margin-top:8px">
+        <div style="flex:2"><input id="u_name" placeholder="Name"></div>
+        <div><select id="u_role"><option value="tech">Tech</option><option value="owner">Owner</option></select></div>
+        <div><input id="u_pin" inputmode="numeric" maxlength="4" placeholder="4-digit PIN"></div>
+      </div>
+      <button class="btn sec full sm" style="margin-top:8px" onclick="addUser()">Add team member</button>
+    </div>
+
+    <button class="btn full" style="margin-top:6px" onclick="saveSettings()">Save settings</button>
+
+    <div class="card">
+      <h2>Data</h2><div class="sub">Jobs are stored on this device. Back up regularly.</div>
+      <div class="stack">
+        <button class="btn sec" onclick="exportData()">Export all jobs (backup)</button>
+        <button class="btn ghost" onclick="document.getElementById('importInput').click()">Import backup</button>
+        <input id="importInput" type="file" accept="application/json" class="hidden" onchange="importData(event)">
+        <button class="btn ghost" onclick="lockNow()">Lock / switch user</button>
+      </div>
+    </div>
+    <div class="card muted" style="font-size:13px">
+      <b>This version (offline):</b> size pricing, vehicle auto-sizing, roles/PIN, checkbox intake/delivery, exterior services, robust waiver, team checklist, save/print/email.<br>
+      <b>Next phases:</b> cloud sync across devices, auto-email receipts, QuickBooks (customer + invoice + attach PDFs), reports dashboard.
+    </div>
+  </section>
+</div>
+
+<nav class="tabbar no-print">
+  <button id="tab-jobs" class="on" onclick="showJobs()"><span class="ic">📋</span>Jobs</button>
+  <button id="tab-new" onclick="startNewJob()"><span class="ic">➕</span>New</button>
+  <button id="tab-settings" onclick="showSettings()"><span class="ic">⚙️</span>Settings</button>
+</nav>
+
+<script>
+/* ============ storage ============ */
+const DB='ntp_jobs_v2', SET='ntp_settings_v2', SESS='ntp_session_v2';
+function loadJobs(){try{return JSON.parse(localStorage.getItem(DB))||[]}catch(e){return[]}}
+function saveJobs(j){localStorage.setItem(DB,JSON.stringify(j))}
+
+/* ============ config ============ */
+const SIZES=[
+  {id:'compact',label:'Compact',desc:'Sedans / hatchbacks'},
+  {id:'standard',label:'Standard',desc:'Crossovers / small trucks'},
+  {id:'fullsize',label:'Full-Size',desc:'3-row SUV / large trucks / vans'}
+];
+const PACKAGES=[
+  {id:'refresh',name:'Refresh Detailing',desc:'Basic / monthly touch-up'},
+  {id:'full',name:'Full Detailing',desc:'Deep / moderate build-up'},
+  {id:'restore',name:'Restoration Detailing',desc:'Intense / neglected vehicles'},
+];
+const EXTERIOR=[
+  {id:'extwash',name:'Exterior Wash',desc:'Body, wheels, undercarriage, trim, chrome'},
+  {id:'extwax',name:'Wash & Wax',desc:'Exterior wash + hand wax'},
+  {id:'extclay',name:'Clay Bar Decon',desc:'Surface contaminant removal'},
+  {id:'extpolish',name:'Paint Polish / Correction',desc:'Swirl & oxidation removal'},
+  {id:'extceramic',name:'Ceramic Coating',desc:'Protective coating'},
+  {id:'exthead',name:'Headlight Restoration',desc:'Clear hazed lenses'},
+  {id:'exteng',name:'Engine Bay Cleaning',desc:'Degrease & dress'},
+];
+const ADDONS=[
+  {id:'pethair',name:'Pet Hair Removal',price:50},
+  {id:'ozone',name:'Ozone Treatment',price:50},
+  {id:'mobile15',name:'Mobile Service (1–15 mi)',price:49},
+  {id:'mobile30',name:'Mobile Service (15–30 mi)',price:79},
+];
+const REF_OPTS=['Referral','Repeat customer','Facebook / Instagram','Google','Drove by','Other'];
+const COND_INT=['Existing stains','Burns / melt marks','Tears / rips in seats','Worn / faded trim','Cracked dashboard','Heavy pet hair','Smoke odor','Pet odor','Other strong odor','Mold / mildew','Sticky / greasy residue','Spilled liquids','Heavy sand / salt / dirt','Biohazard (vomit/blood)','Aftermarket electronics','Loose / missing trim','Child seats present','Personal items present'];
+const COND_EXT=['Existing scratches','Dents / dings','Paint chips','Faded / oxidized paint','Rust spots','Cracked / chipped glass','Hazed headlights','Prior body repair'];
+const DEL_OPTS=['Vehicle inspected by customer','All keys / fobs returned','Personal items returned','Customer satisfied','Before & after photos taken'];
+
+/* real per-package step lists (from website) for team QC */
+const CHECKLISTS={
+  refresh:['Thorough vacuuming','Window cleaning','Dashboard & console + protectant','Door jamb cleaning','Door cleaning + protectant','Floor mat cleaning','Leather treatment / cloth seat cleaning'],
+  full:['Steam clean carpet & cloth seats','Spot stain removal','Headliner cleaning','Thorough vacuuming','Window cleaning','Dashboard & console + protectant','Door jamb cleaning','Door cleaning + protectant','Floor mat cleaning','Leather / cloth seat conditioning','Overnight drying (if needed)'],
+  restore:['Chemical pre-treatment','Greasy / sticky build-up removal','Deep steam carpets & cloth seats','Spot stain removal','Headliner cleaning','Thorough vacuuming','Window cleaning','Dashboard & console + protectant','Door jamb cleaning','Door cleaning + protectant','Floor mat cleaning','Leather / cloth seat conditioning','Overnight drying'],
+  extwash:['Full body wash','Windows','Undercarriage wash','Wheel wash & shine','Plastic & rubber treatment','Chrome polishing'],
+  extwax:['Exterior wash','Hand wax application','Buff & wipe down'],
+  extclay:['Wash','Clay bar entire surface','Inspect for remaining contaminants'],
+  extpolish:['Wash & decon','Machine polish panels','Remove swirls/oxidation','Wipe down & inspect'],
+  extceramic:['Wash & decon','Paint prep / panel wipe','Apply ceramic coating','Cure & buff'],
+  exthead:['Mask area','Sand hazed lens','Polish','Apply sealant'],
+  exteng:['Cover sensitive electronics','Degrease','Rinse','Dress plastics & hoses'],
+};
+
+/* ============ default settings ============ */
+const defaultSettings={
+  name:'North to Perfect Detailing', addr:'209 Stage Rd, Sanbornton, NH 03269',
+  phone:'(603) 520-1881', email:'valentina@ntpdetailing.com', emailsrc:'Gmail',
+  logoUrl:'https://images.squarespace-cdn.com/content/v1/69d114ffec065905f2ab9ff7/9187648e-689e-449f-84c8-505d51a3110f/2F89C713-2634-44B8-A2E2-BD16CC095D9F.PNG?format=300w',
+  discount:0,
+  pricing:{
+    refresh:{compact:199,standard:null,fullsize:null},
+    full:{compact:349,standard:null,fullsize:null},
+    restore:{compact:499,standard:null,fullsize:null},
+    extwash:{compact:99,standard:99,fullsize:99},
+    extwax:{compact:null,standard:null,fullsize:null},
+    extclay:{compact:null,standard:null,fullsize:null},
+    extpolish:{compact:null,standard:null,fullsize:null},
+    extceramic:{compact:null,standard:null,fullsize:null},
+    exthead:{compact:null,standard:null,fullsize:null},
+    exteng:{compact:null,standard:null,fullsize:null},
+  },
+  users:[]  // {name, role:'owner'|'tech', pin}
+};
+function getSettings(){try{const s=JSON.parse(localStorage.getItem(SET))||{};return deepMerge(structuredClone(defaultSettings),s);}catch(e){return structuredClone(defaultSettings);}}
+function setSettings(s){localStorage.setItem(SET,JSON.stringify(s));}
+function deepMerge(a,b){for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])){a[k]=deepMerge(a[k]||{},b[k]);}else{a[k]=b[k];}}return a;}
+
+/* ============ vehicle auto-categorizer ============ */
+const MODEL_SIZE={
+  // compact: sedans/hatchbacks
+  compact:['civic','corolla','camry','accord','sentra','altima','elantra','sonata','jetta','passat','mazda3','mazda6','impreza','legacy','golf','focus','fiesta','cruze','malibu','fusion','dart','3 series','a4','c-class','is','es','model 3','model s','prius','yaris','versa','rio','forte','soul','veloster','gti','wrx','charger','challenger'],
+  // standard: crossovers/small trucks
+  standard:['rav4','cr-v','crv','equinox','escape','rogue','cx-5','cx5','forester','tucson','santa fe','sportage','outback','tiguan','compass','cherokee','wrangler','colorado','canyon','tacoma','ranger','frontier','model y','model x','bronco sport','edge','blazer','murano','rdx','glc','x3','q5','nx','ux','hr-v','trax','seltos','crosstrek','venue','kona','encore','terrain'],
+  // fullsize: 3-row SUV / large trucks / vans
+  fullsize:['f-150','f150','f-250','f250','f-350','silverado','sierra','ram','1500','2500','3500','tundra','titan','tahoe','suburban','yukon','expedition','sequoia','armada','pilot','highlander','telluride','palisade','atlas','traverse','explorer','durango','grand cherokee l','4runner','sienna','odyssey','pacifica','carnival','transit','sprinter','promaster','express','savana','escalade','navigator','qx80','gx','lx','gl','x5','x7','q7','model x']
+};
+function categorize(make,model){
+  const m=(make+' '+model).toLowerCase().trim();
+  if(!model)return null;
+  for(const size of ['fullsize','standard','compact']){
+    if(MODEL_SIZE[size].some(k=>m.includes(k)))return size;
+  }
+  // keyword fallback
+  if(/truck|pickup|van|suburban|expedition|3.?row/.test(m))return 'fullsize';
+  if(/suv|crossover|wagon/.test(m))return 'standard';
+  return null;
+}
+
+/* ============ state ============ */
+let step=0,current=null,session=null;
+const STEPS=['Customer','Vehicle','Condition','Services','Team Checklist','Waiver','Delivery'];
+let pinBuffer='',pinUser=null;
+
+/* ============ auth / lock ============ */
+function getSession(){try{return JSON.parse(sessionStorage.getItem(SESS));}catch(e){return null;}}
+function setSession(u){session=u;sessionStorage.setItem(SESS,JSON.stringify(u));renderWho();}
+function renderWho(){const w=document.getElementById('whoami');w.innerHTML=session?`<b>${esc(session.name)}</b>${session.role}`:'';}
+function isOwner(){return !session || session.role==='owner';}
+function bootAuth(){
+  const s=getSettings();session=getSession();
+  if(!s.users.length){session={name:'Owner',role:'owner'};renderWho();return false;} // no users => open as owner
+  if(session){renderWho();return false;}
+  showLock();return true;
+}
+function showLock(){
+  const s=getSettings();document.getElementById('lock').classList.remove('hidden');
+  document.getElementById('pinArea').classList.add('hidden');
+  const up=document.getElementById('userPick');up.classList.remove('hidden');
+  document.getElementById('lockMsg').textContent="Who's working?";
+  up.innerHTML=s.users.map((u,i)=>`<div class="u" onclick="pickUser(${i})">${esc(u.name)}<div class="muted" style="font-size:11px">${u.role}</div></div>`).join('');
+}
+function pickUser(i){pinUser=getSettings().users[i];pinBuffer='';document.getElementById('userPick').classList.add('hidden');document.getElementById('pinArea').classList.remove('hidden');document.getElementById('lockMsg').textContent=pinUser.name+' — enter PIN';renderDots();}
+function renderDots(){document.querySelectorAll('#pinDots i').forEach((d,i)=>d.classList.toggle('on',i<pinBuffer.length));}
+function pinTap(n){if(pinBuffer.length>=4)return;pinBuffer+=n;renderDots();if(pinBuffer.length===4){setTimeout(checkPin,120);}}
+function pinBack(){pinBuffer=pinBuffer.slice(0,-1);renderDots();}
+function pinCancel(){pinBuffer='';showLock();}
+function checkPin(){
+  if(pinUser&&pinBuffer===String(pinUser.pin)){setSession({name:pinUser.name,role:pinUser.role});document.getElementById('lock').classList.add('hidden');showJobs();}
+  else{document.getElementById('lockMsg').textContent='Wrong PIN — try again';pinBuffer='';renderDots();}
+}
+function lockNow(){sessionStorage.removeItem(SESS);session=null;const s=getSettings();if(s.users.length){showLock();}else{alert('Add team members in Settings to enable PIN lock.');}}
+
+/* ============ view switching ============ */
+function showView(id){['jobs','job','detail','settings'].forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==id));}
+function setTab(t){['jobs','new','settings'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('on',x===t));}
+
+/* ============ jobs list ============ */
+function showJobs(){renderJobs();showView('jobs');setTab('jobs');scrollTop();}
+function renderJobs(){
+  const jobs=loadJobs().sort((a,b)=>b.createdAt-a.createdAt);
+  document.getElementById('jobListEmpty').style.display=jobs.length?'none':'block';
+  document.getElementById('jobList').innerHTML=jobs.map(j=>{
+    const v=j.vehicle||{},c=j.customer||{};
+    const veh=[v.year,v.make,v.model].filter(Boolean).join(' ')||'Vehicle';
+    const st=j.status==='done'?'done':(j.status==='draft'?'prog':'open');
+    const lbl=j.status==='done'?'Done':(j.status==='draft'?'Draft':'Open');
+    return `<div class="job" onclick="openJob('${j.id}')"><div class="meta"><b>${esc(c.name||'No name')}</b>
+      <span>${esc(veh)} · ${new Date(j.createdAt).toLocaleDateString()}</span></div>
+      <div class="right"><div>$${money(j.total)}</div><span class="pill ${st}">${lbl}</span></div></div>`;
+  }).join('');
+}
+
+/* ============ new / edit ============ */
+function blankJob(){return{id:'j'+Date.now()+Math.random().toString(36).slice(2,6),createdAt:Date.now(),status:'open',
+  by:session?session.name:'',customer:{ref:[],newCust:false},vehicle:{size:null},condInt:[],condExt:[],condNotes:'',
+  pkg:null,exterior:[],addons:[],svcNotes:'',photoConsent:false,total:0,regTotal:0,photos:[],qc:[],
+  delivery:{checks:[]},sig_intake:'',sig_delivery:''};}
+function startNewJob(){current=blankJob();step=0;buildJobUI();fillForm(current);renderStep();showView('job');setTab('new');scrollTop();}
+function editCurrent(){if(!current)return;step=0;buildJobUI();fillForm(current);renderStep();showView('job');scrollTop();}
+function cancelJob(){if(confirm('Discard changes to this job?'))showJobs();}
+
+/* build dynamic chips/sizes/services once per open */
+function buildJobUI(){
+  // ref chips
+  document.getElementById('refChips').innerHTML=REF_OPTS.map(o=>chip('ref',o)).join('');
+  // size buttons
+  document.getElementById('sizeBtns').innerHTML=SIZES.map(s=>`<div class="sb" data-size="${s.id}" onclick="pickSize('${s.id}')"><b>${s.label}</b><small>${s.desc}</small></div>`).join('');
+  // condition chips
+  document.getElementById('condInt').innerHTML=COND_INT.map(o=>chip('ci',o,true)).join('');
+  document.getElementById('condExt').innerHTML=COND_EXT.map(o=>chip('ce',o,true)).join('');
+  // delivery chips
+  document.getElementById('delChips').innerHTML=DEL_OPTS.map(o=>chip('del',o)).join('');
+  document.getElementById('waiverText').innerHTML=waiverHTML(getSettings());
+}
+function chip(group,label,warn){return `<div class="chip ${warn?'warnish':''}" data-g="${group}" data-v="${esc(label)}" onclick="toggleChip(this)"><div class="bx"></div><span>${esc(label)}</span></div>`;}
+function toggleChip(el){el.classList.toggle('on');collectChips();}
+function setChips(group,vals){document.querySelectorAll(`.chip[data-g="${group}"]`).forEach(c=>c.classList.toggle('on',(vals||[]).includes(c.dataset.v)));}
+function getChips(group){return[...document.querySelectorAll(`.chip[data-g="${group}"].on`)].map(c=>c.dataset.v);}
+function collectChips(){if(!current)return;current.customer.ref=getChips('ref');current.condInt=getChips('ci');current.condExt=getChips('ce');current.delivery.checks=getChips('del');}
+
+function toggleNewCust(){current.customer.newCust=!current.customer.newCust;document.getElementById('chip_newcust').classList.toggle('on',current.customer.newCust);calcTotal();}
+function togglePhotoConsent(){current.photoConsent=!current.photoConsent;document.getElementById('chip_photoConsent').classList.toggle('on',current.photoConsent);}
+
+/* ---- customer auto-population (returning-customer lookup) ---- */
+let _custMatches=[];
+function customerIndex(){
+  const map={};
+  loadJobs().forEach(j=>{const c=j.customer||{};const key=((c.phone||c.email||c.name||'')+'').toLowerCase().trim();if(!key)return;
+    if(!map[key])map[key]={name:c.name||'',phone:c.phone||'',email:c.email||'',addr:c.addr||'',jobs:0};
+    map[key].jobs++;if(c.name&&!map[key].name)map[key].name=c.name;});
+  return Object.values(map);
+}
+function searchCustomers(){
+  const q=gv('custSearch').toLowerCase();const box=document.getElementById('custResults');if(!box)return;
+  if(q.length<2){box.innerHTML='';_custMatches=[];return;}
+  _custMatches=customerIndex().filter(c=>(c.name+' '+c.phone+' '+c.email).toLowerCase().includes(q)).slice(0,6);
+  box.innerHTML=_custMatches.length?_custMatches.map((c,i)=>`<div class="svc" style="margin:6px 0" onclick="pickCustomer(${i})"><div><div class="name">${esc(c.name)}</div><div class="desc">${esc(c.phone||'')} ${esc(c.email||'')} · ${c.jobs} job(s)</div></div></div>`).join(''):'<div class="muted" style="font-size:13px;padding:6px 0">No match — treat as new customer.</div>';
+}
+function pickCustomer(i){const c=_custMatches[i];if(!c)return;
+  val('c_name',c.name);val('c_phone',c.phone);val('c_email',c.email);val('c_addr',c.addr);
+  current.customer.newCust=false;document.getElementById('chip_newcust').classList.remove('on');
+  val('custSearch','');document.getElementById('custResults').innerHTML='<div style="font-size:13px;padding:4px 0;color:#5aa9ff">Returning customer loaded ✓ — fields filled.</div>';
+  calcTotal();}
+
+function fillForm(j){
+  const c=j.customer||{},v=j.vehicle||{},d=j.delivery||{};
+  val('custSearch','');{const cr=document.getElementById('custResults');if(cr)cr.innerHTML='';}
+  val('c_name',c.name);val('c_phone',c.phone);val('c_email',c.email);val('c_addr',c.addr);
+  setChips('ref',c.ref);document.getElementById('chip_newcust').classList.toggle('on',!!c.newCust);
+  val('v_year',v.year);val('v_make',v.make);val('v_model',v.model);val('v_color',v.color);val('v_plate',v.plate);val('v_vin',v.vin);val('v_odo',v.odo);val('v_keys',v.keys);
+  pickSize(v.size,true);
+  setChips('ci',j.condInt);setChips('ce',j.condExt);val('cond_notes',j.condNotes);
+  val('svc_notes',j.svcNotes);
+  document.getElementById('chip_photoConsent').classList.toggle('on',!!j.photoConsent);
+  setChips('del',d.checks);val('d_concerns',d.concerns);if(d.pay)val('d_pay',d.pay);if(d.paid)val('d_paid',d.paid);
+  renderPhotos();renderServices();renderQC();
+  setTimeout(()=>{restoreSig('sig_intake',j.sig_intake);restoreSig('sig_delivery',j.sig_delivery);},60);
+  // exterior condition card only if exterior chosen
+  document.getElementById('condExtCard').classList.toggle('hidden',!(j.exterior&&j.exterior.length));
+}
+function collectForm(){
+  const j=current;collectChips();
+  j.customer.name=gv('c_name');j.customer.phone=gv('c_phone');j.customer.email=gv('c_email');j.customer.addr=gv('c_addr');
+  j.vehicle.year=gv('v_year');j.vehicle.make=gv('v_make');j.vehicle.model=gv('v_model');j.vehicle.color=gv('v_color');
+  j.vehicle.plate=gv('v_plate');j.vehicle.vin=gv('v_vin');j.vehicle.odo=gv('v_odo');j.vehicle.keys=gv('v_keys');
+  j.condNotes=gv('cond_notes');j.svcNotes=gv('svc_notes');
+  j.delivery.concerns=gv('d_concerns');j.delivery.pay=gv('d_pay');j.delivery.paid=gv('d_paid');
+  j.sig_intake=getSig('sig_intake');j.sig_delivery=getSig('sig_delivery');
+}
+
+/* ============ vehicle size ============ */
+function autoCat(){
+  const make=gv('v_make'),model=gv('v_model');
+  const size=categorize(make,model);
+  const badge=document.getElementById('sizeAuto');
+  if(size && (!current.vehicle.size || current.vehicle._auto)){pickSize(size,true);current.vehicle._auto=true;badge.classList.remove('hidden');}
+}
+function pickSize(size,silent){
+  if(!size)return;current.vehicle.size=size;if(!silent)current.vehicle._auto=false;
+  document.querySelectorAll('#sizeBtns .sb').forEach(b=>b.classList.toggle('on',b.dataset.size===size));
+  if(!silent)document.getElementById('sizeAuto').classList.add('hidden');
+  renderServices();
+}
+
+/* ============ services & pricing ============ */
+function priceFor(pkgId){const s=getSettings();const sz=current.vehicle.size;if(!sz)return null;const row=s.pricing[pkgId];return row?row[sz]:null;}
+function renderServices(){
+  const sel=current.pkg,exSel=new Set(current.exterior||[]),adSel=new Set(current.addons||[]);
+  document.getElementById('svcInterior').innerHTML=PACKAGES.map(p=>{
+    const pr=priceFor(p.id);const on=sel===p.id;
+    return svcRow(on,p.name,p.desc,pr==null?'—':'$'+money(pr),pr==null?'set size':'',`pickPkg('${p.id}')`,pr==null&&!current.vehicle.size);
+  }).join('');
+  document.getElementById('svcExterior').innerHTML=EXTERIOR.map(p=>{
+    const pr=priceFor(p.id);const on=exSel.has(p.id);
+    const noprice=pr==null;
+    return svcRow(on,p.name,p.desc,noprice?'—':'$'+money(pr),noprice?'set price in Settings':'',`toggleExt('${p.id}')`,noprice);
+  }).join('');
+  document.getElementById('svcAddons').innerHTML=ADDONS.map(a=>svcRow(adSel.has(a.id),a.name,'',' +$'+a.price,'',`toggleAddon('${a.id}')`,false)).join('');
+  calcTotal();
+}
+function svcRow(on,name,desc,price,sub,onclick,disabled){
+  return `<div class="svc ${on?'on':''} ${disabled?'disabled':''}" onclick="${disabled?'':onclick}">
+    <div class="box">${on?'✓':''}</div>
+    <div><div class="name">${name}</div>${desc?`<div class="desc">${desc}</div>`:''}</div>
+    <div class="price">${price}${sub?`<small>${sub}</small>`:''}</div></div>`;
+}
+function pickPkg(id){if(!current.vehicle.size){alert('Pick the vehicle size first (Step 2).');return;}current.pkg=current.pkg===id?null:id;renderServices();renderQC();}
+function toggleExt(id){const s=new Set(current.exterior);s.has(id)?s.delete(id):s.add(id);current.exterior=[...s];document.getElementById('condExtCard').classList.toggle('hidden',!current.exterior.length);renderServices();renderQC();}
+function toggleAddon(id){const s=new Set(current.addons);s.has(id)?s.delete(id):s.add(id);current.addons=[...s];renderServices();}
+function calcTotal(){
+  let reg=0;
+  if(current.pkg){const p=priceFor(current.pkg);if(p)reg+=p;}
+  (current.exterior||[]).forEach(id=>{const p=priceFor(id);if(p)reg+=p;});
+  (current.addons||[]).forEach(id=>{const a=ADDONS.find(x=>x.id===id);if(a)reg+=a.price;});
+  const s=getSettings();const disc=current.customer.newCust?(parseFloat(s.discount)||0):0;
+  const total=Math.round(reg*(1-disc/100));
+  current.regTotal=reg;current.total=total;current.discPct=disc;
+  const tEl=document.getElementById('svcTotal'),sEl=document.getElementById('svcStrike'),nEl=document.getElementById('discNote');
+  if(tEl){tEl.textContent='$'+money(total);}
+  if(sEl){if(disc>0&&reg>0){sEl.textContent='$'+money(reg);sEl.classList.remove('hidden');}else{sEl.classList.add('hidden');}}
+  if(nEl){nEl.textContent=disc>0?`New-customer discount ${disc}% applied`:'';}
+}
+
+/* ============ team QC checklist ============ */
+function renderQC(){
+  const items=[];
+  if(current.pkg&&CHECKLISTS[current.pkg])CHECKLISTS[current.pkg].forEach(i=>items.push(i));
+  (current.exterior||[]).forEach(id=>{(CHECKLISTS[id]||[]).forEach(i=>items.push((EXTERIOR.find(e=>e.id===id)||{}).name+': '+i));});
+  const done=new Set(current.qc||[]);
+  const wrap=document.getElementById('qcList');if(!wrap)return;
+  if(!items.length){wrap.innerHTML='<div class="muted">Select a package/service first (Step 4) to load the checklist.</div>';return;}
+  wrap.innerHTML=items.map(i=>`<div class="qc ${done.has(i)?'on':''}" onclick="toggleQC('${esc(i).replace(/'/g,"\\'")}')"><div class="bx">${done.has(i)?'✓':''}</div><div>${esc(i)}</div></div>`).join('');
+}
+function toggleQC(item){const s=new Set(current.qc);s.has(item)?s.delete(item):s.add(item);current.qc=[...s];renderQC();}
+
+/* ============ photos ============ */
+function addPhotos(e){
+  [...e.target.files].forEach(f=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{
+    const max=1000,sc=Math.min(1,max/Math.max(img.width,img.height));const cv=document.createElement('canvas');
+    cv.width=img.width*sc;cv.height=img.height*sc;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+    current.photos.push(cv.toDataURL('image/jpeg',0.7));renderPhotos();};img.src=r.result;};r.readAsDataURL(f);});
+  e.target.value='';
+}
+function renderPhotos(){const w=document.getElementById('photos');if(!w)return;w.innerHTML=(current.photos||[]).map((p,i)=>`<img class="ph" src="${p}" onclick="rmPhoto(${i})" title="Tap to remove">`).join('');}
+function rmPhoto(i){if(confirm('Remove this photo?')){current.photos.splice(i,1);renderPhotos();}}
+
+/* ============ signature ============ */
+const pads={};
+function sizeCanvas(id){const cv=document.getElementById(id);if(!cv)return;const data=pads[id]&&pads[id].dirty?cv.toDataURL():null;
+  const r=cv.getBoundingClientRect();cv.width=r.width*2;cv.height=r.height*2;const ctx=cv.getContext('2d');ctx.scale(2,2);
+  ctx.lineWidth=2.2;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#111';
+  pads[id]=pads[id]||{dirty:false};pads[id].ctx=ctx;pads[id].cv=cv;
+  if(data){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0,r.width,r.height);img.src=data;}bindPad(id);}
+function bindPad(id){const cv=document.getElementById(id);if(cv._bound)return;cv._bound=true;let drawing=false,px,py;
+  const pos=e=>{const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return[t.clientX-r.left,t.clientY-r.top];};
+  const start=e=>{e.preventDefault();drawing=true;[px,py]=pos(e);hideHint(id);};
+  const move=e=>{if(!drawing)return;e.preventDefault();const[x,y]=pos(e);const c=pads[id].ctx;c.beginPath();c.moveTo(px,py);c.lineTo(x,y);c.stroke();[px,py]=[x,y];pads[id].dirty=true;};
+  const end=()=>{drawing=false;};
+  cv.addEventListener('mousedown',start);cv.addEventListener('mousemove',move);window.addEventListener('mouseup',end);
+  cv.addEventListener('touchstart',start,{passive:false});cv.addEventListener('touchmove',move,{passive:false});cv.addEventListener('touchend',end);}
+function hideHint(id){const h=document.querySelector(`.hint[data-for="${id}"]`);if(h)h.style.display='none';}
+function showHint(id){const h=document.querySelector(`.hint[data-for="${id}"]`);if(h)h.style.display='block';}
+function clearSig(id){const c=pads[id];if(c){c.ctx.clearRect(0,0,c.cv.width,c.cv.height);c.dirty=false;}current['_'+id]='';showHint(id);}
+function getSig(id){const c=pads[id];return(c&&c.dirty)?c.cv.toDataURL('image/png'):(current['_'+id]||'');}
+function restoreSig(id,data){current['_'+id]=data||'';sizeCanvas(id);if(data){const c=pads[id];const img=new Image();img.onload=()=>{const r=c.cv.getBoundingClientRect();c.ctx.drawImage(img,0,0,r.width,r.height);c.dirty=true;hideHint(id);};img.src=data;}}
+
+/* ============ step nav ============ */
+function renderStep(){
+  document.querySelectorAll('.step').forEach(s=>s.classList.toggle('hidden',+s.dataset.step!==step));
+  document.getElementById('stepTitle').textContent=STEPS[step];
+  document.getElementById('stepCount').textContent=`Step ${step+1} of ${STEPS.length}`;
+  document.getElementById('prog').style.width=((step+1)/STEPS.length*100)+'%';
+  document.getElementById('btnBack').style.visibility=step===0?'hidden':'visible';
+  const last=step===STEPS.length-1;
+  document.getElementById('btnNext').style.display=last?'none':'block';
+  document.getElementById('btnSave').style.display=last?'block':'none';
+  if(step===5)setTimeout(()=>sizeCanvas('sig_intake'),30);
+  if(step===6)setTimeout(()=>sizeCanvas('sig_delivery'),30);
+  if(step===4)renderQC();
+  scrollTop();
+}
+function nextStep(){collectForm();if(step<STEPS.length-1){step++;renderStep();}}
+function prevStep(){collectForm();if(step>0){step--;renderStep();}}
+
+/* ============ save ============ */
+function saveDraft(){collectForm();current.status=current.status==='done'?'done':'draft';upsert();alert('Draft saved.');showJobs();}
+function saveJob(){collectForm();if(!current.customer.name){alert('Enter a customer name (Step 1).');return;}current.status='done';current.deliveredAt=Date.now();upsert();openJob(current.id);}
+function upsert(){const jobs=loadJobs();const i=jobs.findIndex(j=>j.id===current.id);if(i>=0)jobs[i]=current;else jobs.push(current);saveJobs(jobs);}
+
+/* ============ detail / receipt ============ */
+let detailMode='customer';
+function openJob(id){current=loadJobs().find(j=>j.id===id);if(!current)return showJobs();detailMode='customer';renderDetail();showView('detail');setTab('jobs');scrollTop();
+  document.getElementById('btnDelete').style.display=isOwner()?'block':'none';}
+function sizeLabel(id){const s=SIZES.find(x=>x.id===id);return s?s.label:'';}
+function renderDetail(){
+  const s=getSettings(),j=current,c=j.customer||{},v=j.vehicle||{},d=j.delivery||{};
+  const veh=[v.year,v.make,v.model].filter(Boolean).join(' ');
+  const lines=[];
+  if(j.pkg){const p=PACKAGES.find(x=>x.id===j.pkg);lines.push([p?p.name:'Package',priceFor(j.pkg)]);}
+  (j.exterior||[]).forEach(id=>{const p=EXTERIOR.find(x=>x.id===id);lines.push([p?p.name:id,priceFor(id)]);});
+  (j.addons||[]).forEach(id=>{const a=ADDONS.find(x=>x.id===id);lines.push([a?a.name:id,a?a.price:0]);});
+  const svcRows=lines.map(l=>`<div class="kv"><span>${esc(l[0])}</span><span>${l[1]==null?'—':'$'+money(l[1])}</span></div>`).join('')||'<div class="muted">None</div>';
+  const condAll=[...(j.condInt||[]).map(x=>x),...(j.condExt||[]).map(x=>'Ext: '+x)];
+  document.getElementById('detailBody').innerHTML=`
+  <div class="card center">
+    <div style="font-size:20px;font-weight:800">${esc(s.name)}</div>
+    <div class="muted" style="font-size:13px">${esc(s.addr)}<br>${esc(s.phone)} · ${esc(s.email)}</div>
+    <div style="margin-top:8px"><span class="pill ${j.status==='done'?'done':(j.status==='draft'?'prog':'open')}">${j.status==='done'?'Completed':(j.status==='draft'?'Draft':'Open')}</span></div>
+  </div>
+  <div class="card">
+    <h2>Customer &amp; Vehicle</h2>
+    <div class="kv"><span>Name</span><span>${esc(c.name)}</span></div>
+    <div class="kv"><span>Contact</span><span>${esc(c.phone||'')} ${esc(c.email||'')}</span></div>
+    <div class="kv"><span>Vehicle</span><span>${esc(veh)} ${v.color?'· '+esc(v.color):''}</span></div>
+    <div class="kv"><span>Size</span><span>${esc(sizeLabel(v.size))}</span></div>
+    <div class="kv"><span>Plate</span><span>${esc(v.plate||'')}</span></div>
+    <div class="kv"><span>Odometer</span><span>${esc(v.odo||'')}</span></div>
+    <div class="kv"><span>Keys received</span><span>${esc(v.keys||'')}</span></div>
+    <div class="kv"><span>Intake by</span><span>${esc(j.by||'')}</span></div>
+    <div class="kv"><span>Date in</span><span>${new Date(j.createdAt).toLocaleString()}</span></div>
+  </div>
+  <div class="card">
+    <h2>Services</h2>${svcRows}
+    ${j.svcNotes?`<div class="kv"><span>Notes</span><span>${esc(j.svcNotes)}</span></div>`:''}
+    <div class="total"><span>Total</span><span>${j.discPct>0?`<span class="strike">$${money(j.regTotal)}</span>`:''}$${money(j.total)}</span></div>
+    ${j.discPct>0?`<div class="muted" style="font-size:12px">Includes ${j.discPct}% new-customer discount</div>`:''}
+  </div>
+  <div class="card">
+    <h2>Condition at intake</h2>
+    ${condAll.length?`<div class="chips">${condAll.map(x=>`<span class="chip on" style="cursor:default"><span>${esc(x)}</span></span>`).join('')}</div>`:'<div class="muted">None noted</div>'}
+    ${j.condNotes?`<div class="kv" style="margin-top:8px"><span>Notes</span><span>${esc(j.condNotes)}</span></div>`:''}
+    ${(j.photos||[]).length?`<div class="photos">${j.photos.map(p=>`<img class="ph" src="${p}">`).join('')}</div>`:''}
+  </div>
+  <div class="card no-print" id="teamCard">
+    <h2>Team checklist <span class="auto">internal</span></h2>
+    ${qcSummary(j)}
+  </div>
+  <div class="card">
+    <h2>Authorization &amp; Waiver</h2>
+    <div class="legal">${waiverHTML(s)}</div>
+    <div class="kv" style="margin-top:8px"><span>Photo consent</span><span>${j.photoConsent?'Yes':'No'}</span></div>
+    <div class="kv"><span>Customer signature</span><span>${j.sig_intake?'<img src="'+j.sig_intake+'" style="height:46px">':'<i class=muted>not signed</i>'}</span></div>
+  </div>
+  <div class="card">
+    <h2>Delivery</h2>
+    ${(d.checks||[]).length?`<div class="chips">${d.checks.map(x=>`<span class="chip on" style="cursor:default"><span>${esc(x)}</span></span>`).join('')}</div>`:''}
+    ${d.concerns?`<div class="kv" style="margin-top:8px"><span>Concerns</span><span>${esc(d.concerns)}</span></div>`:''}
+    <div class="kv"><span>Payment</span><span>${esc(d.pay||'')} · ${esc(d.paid||'')}</span></div>
+    <div class="kv"><span>Customer signature</span><span>${j.sig_delivery?'<img src="'+j.sig_delivery+'" style="height:46px">':'<i class=muted>not signed</i>'}</span></div>
+  </div>`;
+}
+function qcSummary(j){
+  const items=[];
+  if(j.pkg&&CHECKLISTS[j.pkg])CHECKLISTS[j.pkg].forEach(i=>items.push(i));
+  (j.exterior||[]).forEach(id=>{(CHECKLISTS[id]||[]).forEach(i=>items.push((EXTERIOR.find(e=>e.id===id)||{}).name+': '+i));});
+  const done=new Set(j.qc||[]);
+  if(!items.length)return '<div class="muted">No checklist.</div>';
+  return items.map(i=>`<div class="qc ${done.has(i)?'on':''}" style="cursor:default"><div class="bx">${done.has(i)?'✓':''}</div><div>${esc(i)}</div></div>`).join('')
+    +`<div class="muted" style="font-size:12px;margin-top:6px">${done.size} of ${items.length} steps complete</div>`;
+}
+function printCustomer(){document.getElementById('teamCard').classList.add('hidden');window.print();}
+function printInternal(){
+  const j=current,s=getSettings();const w=window.open('','_blank');
+  const items=[];if(j.pkg&&CHECKLISTS[j.pkg])CHECKLISTS[j.pkg].forEach(i=>items.push(i));
+  (j.exterior||[]).forEach(id=>{(CHECKLISTS[id]||[]).forEach(i=>items.push((EXTERIOR.find(e=>e.id===id)||{}).name+': '+i));});
+  const done=new Set(j.qc||[]);
+  const veh=[j.vehicle.year,j.vehicle.make,j.vehicle.model].filter(Boolean).join(' ');
+  w.document.write(`<html><head><title>Team Sheet</title><style>body{font-family:-apple-system,Arial;padding:24px}h1{font-size:18px}li{margin:6px 0;font-size:15px}.d{color:#1a7}</style></head><body>
+   <h1>${esc(s.name)} — Internal Work Sheet</h1>
+   <p><b>${esc(j.customer.name||'')}</b> · ${esc(veh)} · ${esc(sizeLabel(j.vehicle.size))}<br>Intake: ${new Date(j.createdAt).toLocaleString()} · By: ${esc(j.by||'')}</p>
+   <h3>Work performed checklist</h3><ul>${items.map(i=>`<li>${done.has(i)?'☑':'☐'} ${esc(i)}</li>`).join('')}</ul>
+   <p style="color:#888;font-size:12px">Internal use only — not a customer document.</p>
+   <script>window.print()<\/script></body></html>`);w.document.close();
+}
+function deleteCurrent(){if(!isOwner()){alert('Only an Owner can delete jobs.');return;}if(confirm('Delete this job permanently?')){saveJobs(loadJobs().filter(j=>j.id!==current.id));showJobs();}}
+function emailCurrent(){const s=getSettings(),j=current,c=j.customer||{};const veh=[j.vehicle.year,j.vehicle.make,j.vehicle.model].filter(Boolean).join(' ');
+  const body=`Hi ${c.name||''},%0D%0A%0D%0AThank you for choosing ${s.name}!%0D%0A%0D%0AVehicle: ${veh}%0D%0ATotal: $${money(j.total)}%0D%0A%0D%0AYour receipt and paperwork are attached.%0D%0A%0D%0A${s.name}%0D%0A${s.phone}`;
+  window.location.href=`mailto:${c.email||''}?subject=${encodeURIComponent(s.name+' — Receipt for '+veh)}&body=${body}`;}
+
+/* ============ settings ============ */
+function showSettings(){
+  const s=getSettings();
+  val('s_name',s.name);val('s_addr',s.addr);val('s_phone',s.phone);val('s_email',s.email);val('s_emailsrc',s.emailsrc);val('s_logo',s.logoUrl);val('s_discount',s.discount);
+  renderMatrix(s);renderUsers(s);
+  const owner=isOwner();
+  document.getElementById('settingsLocked').classList.toggle('hidden',owner);
+  document.getElementById('pricingCard').style.opacity=owner?1:.5;document.getElementById('pricingCard').style.pointerEvents=owner?'auto':'none';
+  document.getElementById('usersCard').style.opacity=owner?1:.5;document.getElementById('usersCard').style.pointerEvents=owner?'auto':'none';
+  showView('settings');setTab('settings');scrollTop();
+}
+function renderMatrix(s){
+  const rows=[...PACKAGES,...EXTERIOR];
+  let html=`<tr><th>Service</th>${SIZES.map(z=>`<th>${z.label}</th>`).join('')}</tr>`;
+  rows.forEach(p=>{html+=`<tr><td>${p.name}</td>${SIZES.map(z=>{const val=(s.pricing[p.id]||{})[z.id];return `<td><input inputmode="decimal" data-pkg="${p.id}" data-sz="${z.id}" value="${val==null?'':val}" placeholder="—"></td>`;}).join('')}</tr>`;});
+  document.getElementById('priceMatrix').innerHTML=html;
+}
+function renderUsers(s){
+  document.getElementById('userList').innerHTML=(s.users||[]).map((u,i)=>`<div class="kv"><span>${esc(u.name)} <span class="muted">(${u.role})</span></span><span><button class="btn ghost sm" onclick="rmUser(${i})">Remove</button></span></div>`).join('')||'<div class="muted">No team members yet — app stays open as Owner.</div>';
+}
+function addUser(){if(!isOwner())return;const name=gv('u_name'),role=gv('u_role'),pin=gv('u_pin');
+  if(!name||!/^\d{4}$/.test(pin)){alert('Enter a name and a 4-digit PIN.');return;}
+  const s=getSettings();s.users.push({name,role,pin});setSettings(s);val('u_name','');val('u_pin','');renderUsers(s);}
+function rmUser(i){const s=getSettings();s.users.splice(i,1);setSettings(s);renderUsers(s);}
+function saveSettings(){
+  const s=getSettings();
+  if(isOwner()){
+    s.name=gv('s_name');s.addr=gv('s_addr');s.phone=gv('s_phone');s.email=gv('s_email');s.emailsrc=gv('s_emailsrc');s.logoUrl=gv('s_logo');
+    s.discount=parseFloat(gv('s_discount'))||0;
+    document.querySelectorAll('#priceMatrix input').forEach(inp=>{const pkg=inp.dataset.pkg,sz=inp.dataset.sz;s.pricing[pkg]=s.pricing[pkg]||{};const v=inp.value.trim();s.pricing[pkg][sz]=v===''?null:parseFloat(v);});
+  }
+  setSettings(s);applyBrand();alert('Settings saved.');showJobs();
+}
+function applyBrand(){const s=getSettings();document.getElementById('hdrName').textContent=s.name;
+  const img=s.logoUrl?`<img src="${esc(s.logoUrl)}" alt="logo" style="width:100%;height:100%;object-fit:contain;background:#fff" onerror="this.parentNode.textContent='NTP'">`:'NTP';
+  const h=document.getElementById('hdrLogo'),l=document.getElementById('lockLogo');
+  if(h)h.innerHTML=img;if(l)l.innerHTML=img;}
+
+/* ============ backup ============ */
+function exportData(){const blob=new Blob([JSON.stringify({jobs:loadJobs(),settings:getSettings(),exported:new Date().toISOString()},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ntp-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();}
+function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.jobs)saveJobs(d.jobs);if(d.settings)setSettings(d.settings);alert('Backup imported.');applyBrand();showJobs();}catch(err){alert('Could not read that file.');}};r.readAsText(f);e.target.value='';}
+
+/* ============ waiver ============ */
+function waiverHTML(s){const n=esc(s.name);return `
+<b>${n} — Service Authorization &amp; Liability Waiver</b>
+<p>I am the owner of the vehicle described, or am authorized by the owner to approve this work. I authorize ${n} ("the Shop") to perform the detailing services selected, and to start, move, and park the vehicle as needed to perform them.</p>
+<h4>1. Pre-existing conditions</h4><p>Detailing uses cleaning agents, water and steam extraction, heat, brushing, and agitation. These can reveal or, despite reasonable care, affect pre-existing conditions — including worn, faded, brittle, previously repaired, or aftermarket materials; loose or aging trim, clips, and fasteners; existing stains, odors, burns, or adhesive residue; and sensitive electronics. I confirm the conditions documented at intake and accept that additional pre-existing issues may surface during service.</p>
+<h4>2. Results are not guaranteed</h4><p>Complete removal of all stains, odors, pet hair, or wear cannot be guaranteed. Some materials (suede/Alcantara, unsealed leather, delicate fabrics, oxidized or sun-damaged surfaces, non-OEM components) may react unpredictably. The Shop will use reasonable, industry-standard methods and products.</p>
+<h4>3. Water, moisture &amp; electronics</h4><p>Interior cleaning introduces moisture. I understand drying times vary, that residual dampness or odor can persist temporarily, and that the Shop is not liable for pre-existing or latent electrical faults, corrosion, or component failure that moisture may expose.</p>
+<h4>4. Odor, ozone &amp; biohazard</h4><p>Ozone and odor treatments reduce but may not fully eliminate odors. I will not occupy the vehicle during/immediately after ozone treatment as directed. For biohazard, mold, or heavy contamination, I accept that remediation has limits and re-treatment may be needed at additional cost.</p>
+<h4>5. Exterior services (if selected)</h4><p>Washing, clay bar, polishing, paint correction, coating, and headlight restoration carry inherent risk on neglected, previously damaged, repainted, wrapped, or aftermarket finishes. Existing scratches, swirls, chips, oxidation, or weak clear coat may become more visible or, despite care, be affected. I acknowledge the exterior conditions documented at intake.</p>
+<h4>6. Personal property &amp; valuables</h4><p>I am responsible for removing all valuables, cash, firearms, electronics, documents, and personal items. The Shop is not responsible for loss of or damage to items left in the vehicle, including items in trunks, consoles, and glove boxes.</p>
+<h4>7. Child seats &amp; accessories</h4><p>If child seats or accessories are present, I am responsible for their proper reinstallation and safety after service. The Shop does not warrant correct reinstallation of safety equipment.</p>
+<h4>8. Estimates, timing &amp; authorization to exceed</h4><p>Quoted prices are estimates based on size and condition. If added soiling or issues change the scope, the Shop will contact me before exceeding the estimate; if I cannot be reached, the Shop may stop at the estimated amount. Completion times are estimates and may change, including overnight drying.</p>
+<h4>9. Photographs</h4><p>The Shop may take before/after photos for records and quality control. Marketing use requires my separate consent (checkbox), and the Shop will avoid showing identifying details such as plates.</p>
+<h4>10. Release &amp; limitation of liability</h4><p>To the fullest extent permitted by New Hampshire law, I release ${n}, its owner, employees, and agents from claims arising out of (a) pre-existing conditions, (b) the inherent limits of detailing described above, and (c) personal property left in the vehicle. <b>This release does not apply to damage caused by the Shop's own negligence or willful misconduct.</b> Except where prohibited by law, the Shop's total liability for any claim is limited to the cost of the service performed, or, at the Shop's option, repair or correction of the affected area. The Shop is not liable for indirect, incidental, or consequential damages.</p>
+<h4>11. Claims window</h4><p>Any concern about the work must be reported to the Shop within 48 hours of pickup, with the vehicle made available for inspection, so the Shop has the opportunity to assess and remedy.</p>
+<h4>12. Cancellation &amp; no-show</h4><p>Appointments require at least 24 hours' notice to cancel or reschedule. No-shows or cancellations inside that window may be charged a fee of up to 50% of the booked service or forfeit any deposit.</p>
+<h4>13. Deposits</h4><p>A deposit may be required to reserve a booking. Deposits are applied to the final price and are non-refundable if the appointment is cancelled inside the notice window or missed.</p>
+<h4>14. Late pickup &amp; storage</h4><p>Vehicles should be picked up within 24 hours of completion notice. Vehicles left beyond that may incur a storage fee of $25 per day. The Shop is not responsible for vehicles or contents left on the premises.</p>
+<h4>15. Refunds, satisfaction &amp; re-do</h4><p>If you are not satisfied, notify the Shop within 48 hours and make the vehicle available; the Shop will re-clean the affected area at no charge. Refunds are at the Shop's discretion and are not given for results limited by pre-existing conditions, normal wear, or issues disclosed at intake.</p>
+<h4>16. Right to refuse or stop service</h4><p>The Shop may decline or stop service for unsafe conditions, undisclosed biohazard or contamination, or vehicles in a condition that risks damage, and may charge for work already performed.</p>
+<h4>17. Unclaimed / abandoned vehicles</h4><p>A vehicle left more than 15 days after a completion or contact notice, without response from the owner, may be treated as abandoned and handled as permitted under New Hampshire law, including applicable liens for unpaid charges and storage.</p>
+<h4>18. Governing law</h4><p>This agreement is governed by the laws of the State of New Hampshire. If any provision is found unenforceable, the remaining provisions stay in effect.</p>
+<p>I have read and understood this authorization and waiver, have had the opportunity to ask questions, and sign voluntarily.</p>
+<p style="color:#8a94a6"><i>DRAFT — broad coverage for interior &amp; exterior detailing plus shop policies (cancellation, deposits, storage, refunds, abandonment). Dollar amounts and time windows are starting defaults — confirm the numbers you want. Have a licensed New Hampshire attorney review before customer use.</i></p>`;}
+
+/* ============ helpers ============ */
+function val(id,v){const e=document.getElementById(id);if(e)e.value=(v==null?'':v);}
+function gv(id){const e=document.getElementById(id);return e?String(e.value).trim():'';}
+function money(n){n=Math.round(n||0);return n.toLocaleString('en-US');}
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function scrollTop(){window.scrollTo(0,0);}
+window.addEventListener('resize',()=>{if(step===5)sizeCanvas('sig_intake');if(step===6)sizeCanvas('sig_delivery');});
+window.addEventListener('beforeprint',()=>{});window.addEventListener('afterprint',()=>{const tc=document.getElementById('teamCard');if(tc)tc.classList.remove('hidden');});
+
+/* ============ init ============ */
+applyBrand();
+if(!bootAuth()){showJobs();}
+</script>
+</body>
+</html>
