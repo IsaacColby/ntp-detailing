@@ -944,10 +944,12 @@ async function onCloudSignedIn(user){
     let {data:prof}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
     if(!prof){
       const s=getSettings();
-      const {data:ten,error:te}=await sb.from('tenants').insert({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing}}).select().single();
-      if(te){console.error('tenant',te);return;}
-      cloudTenant=ten.id;
-      await sb.from('profiles').insert({id:user.id,tenant_id:ten.id,name:s.name||'Owner',role:'owner'});
+      const tid=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('00000000-0000-4000-8000-'+Date.now().toString(16).padStart(12,'0'));
+      const {error:te}=await sb.from('tenants').insert({id:tid,name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing}});
+      if(te){console.error('tenant',te);alert('Cloud setup error: '+te.message);return;}
+      const {error:pe}=await sb.from('profiles').insert({id:user.id,tenant_id:tid,name:s.name||'Owner',role:'owner'});
+      if(pe){console.error('profile',pe);alert('Cloud setup error: '+pe.message);return;}
+      cloudTenant=tid;
     } else { cloudTenant=prof.tenant_id; }
   }catch(e){ console.error('signin',e); }
 }
