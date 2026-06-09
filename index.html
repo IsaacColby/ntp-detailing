@@ -367,6 +367,21 @@
         <button class="btn ghost" onclick="lockNow()">Lock / switch user</button>
       </div>
     </div>
+    <div class="card" id="cloudCard">
+      <h2>Cloud sync &amp; login</h2>
+      <div class="sub" id="cloudStatus">Not signed in.</div>
+      <div id="cloudIn">
+        <label>Email</label><input id="cl_email" type="email" autocomplete="username" placeholder="you@email.com">
+        <label>Password (6+ characters)</label><input id="cl_pass" type="password" autocomplete="current-password">
+        <button class="btn full" style="margin-top:10px" onclick="cloudAuth()">Sign in / Create account</button>
+        <div class="muted" style="font-size:12px;margin-top:6px">First time: enter an email + password to create your owner login. Then sign in on any device — iPad, phone, computer — to share the same jobs &amp; customers.</div>
+      </div>
+      <div id="cloudOut" class="hidden stack">
+        <button class="btn sec" onclick="syncNow().then(function(ok){alert(ok?'Synced.':'Sync had an issue — will retry.')})">Sync now</button>
+        <button class="btn ghost" onclick="cloudSignOut()">Sign out of cloud</button>
+      </div>
+    </div>
+
     <div class="card muted" style="font-size:13px">
       <b>This version (offline):</b> size pricing, vehicle auto-sizing, roles/PIN, checkbox intake/delivery, exterior services, robust waiver, team checklist, save/print/email.<br>
       <b>Next phases:</b> cloud sync across devices, auto-email receipts, QuickBooks (customer + invoice + attach PDFs), reports dashboard.
@@ -380,6 +395,7 @@
   <button id="tab-settings" onclick="showSettings()"><span class="ic">⚙️</span>Settings</button>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============ storage ============ */
 const DB='ntp_jobs_v2', SET='ntp_settings_v2', SESS='ntp_session_v2';
@@ -725,7 +741,7 @@ function prevStep(){collectForm();if(step>0){step--;renderStep();}}
 /* ============ save ============ */
 function saveDraft(){collectForm();current.status=current.status==='done'?'done':'draft';upsert();alert('Draft saved.');showJobs();}
 function saveJob(){collectForm();if(!current.customer.name){alert('Enter a customer name (Step 1).');return;}current.status='done';current.deliveredAt=Date.now();upsert();openJob(current.id);}
-function upsert(){const jobs=loadJobs();const i=jobs.findIndex(j=>j.id===current.id);if(i>=0)jobs[i]=current;else jobs.push(current);saveJobs(jobs);}
+function upsert(){const jobs=loadJobs();const i=jobs.findIndex(j=>j.id===current.id);if(i>=0)jobs[i]=current;else jobs.push(current);saveJobs(jobs);if(cloudUser)syncNow(true);}
 
 /* ============ detail / receipt ============ */
 let detailMode='customer';
@@ -826,6 +842,7 @@ function showSettings(){
   document.getElementById('settingsLocked').classList.toggle('hidden',owner);
   document.getElementById('pricingCard').style.opacity=owner?1:.5;document.getElementById('pricingCard').style.pointerEvents=owner?'auto':'none';
   document.getElementById('usersCard').style.opacity=owner?1:.5;document.getElementById('usersCard').style.pointerEvents=owner?'auto':'none';
+  updateCloudUI();
   showView('settings');setTab('settings');scrollTop();
 }
 function renderMatrix(s){
@@ -894,8 +911,82 @@ function scrollTop(){window.scrollTo(0,0);}
 window.addEventListener('resize',()=>{if(step===5)sizeCanvas('sig_intake');if(step===6)sizeCanvas('sig_delivery');});
 window.addEventListener('beforeprint',()=>{});window.addEventListener('afterprint',()=>{const tc=document.getElementById('teamCard');if(tc)tc.classList.remove('hidden');});
 
+/* ============ cloud sync (Supabase) ============ */
+const SUPA_URL='https://edipivcbdbjlhpymftpe.supabase.co';
+const SUPA_KEY='sb_publishable_GwNbWRlcKsZEHI8ZiwhXgQ_vUJsOtGV';
+let sb=null, cloudUser=null, cloudTenant=null;
+function cloudOnline(){return typeof window.supabase!=='undefined' && navigator.onLine;}
+function initCloud(){
+  if(typeof window.supabase==='undefined')return;
+  try{ sb=window.supabase.createClient(SUPA_URL,SUPA_KEY); }catch(e){return;}
+  sb.auth.getSession().then(async ({data})=>{ if(data&&data.session){ await onCloudSignedIn(data.session.user); await syncNow(true); } updateCloudUI(); });
+}
+async function cloudAuth(){
+  if(!sb){alert('Cloud unavailable — check your internet, then reopen the app.');return;}
+  const email=gv('cl_email').toLowerCase(), pass=gv('cl_pass');
+  if(!email||pass.length<6){alert('Enter your email and a password of at least 6 characters.');return;}
+  let {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){
+    const r=await sb.auth.signUp({email,password:pass});
+    if(r.error){alert('Could not sign in: '+r.error.message);return;}
+    data=r.data;
+    if(!data.session){ const r2=await sb.auth.signInWithPassword({email,password:pass}); if(r2.error){alert('Account created — tap Sign in once more.');return;} data=r2.data; }
+  }
+  await onCloudSignedIn(data.user);
+  const p=document.getElementById('cl_pass'); if(p)p.value='';
+  const ok=await syncNow();
+  updateCloudUI();
+  alert(ok===false?'Signed in. Sync will finish shortly.':'Signed in and synced across your devices.');
+}
+async function onCloudSignedIn(user){
+  cloudUser=user;
+  try{
+    let {data:prof}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+    if(!prof){
+      const s=getSettings();
+      const {data:ten,error:te}=await sb.from('tenants').insert({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing}}).select().single();
+      if(te){console.error('tenant',te);return;}
+      cloudTenant=ten.id;
+      await sb.from('profiles').insert({id:user.id,tenant_id:ten.id,name:s.name||'Owner',role:'owner'});
+    } else { cloudTenant=prof.tenant_id; }
+  }catch(e){ console.error('signin',e); }
+}
+async function cloudSignOut(){ if(sb)await sb.auth.signOut(); cloudUser=null;cloudTenant=null;updateCloudUI(); }
+function updateCloudUI(){
+  const st=document.getElementById('cloudStatus'),inB=document.getElementById('cloudIn'),outB=document.getElementById('cloudOut');
+  if(!st)return;
+  if(cloudUser){ st.innerHTML='✓ Signed in as <b>'+esc(cloudUser.email)+'</b> — this device syncs to the cloud.'; if(inB)inB.classList.add('hidden'); if(outB)outB.classList.remove('hidden'); }
+  else { st.textContent=cloudOnline()?'Not signed in. Sign in to share jobs & customers across devices.':'Offline — cloud sync paused. The app still works on this device.'; if(inB)inB.classList.remove('hidden'); if(outB)outB.classList.add('hidden'); }
+}
+async function syncNow(silent){
+  if(!sb||!cloudUser||!cloudTenant)return false;
+  try{
+    const jobs=loadJobs();
+    const custMap={};
+    jobs.forEach(j=>{const c=j.customer||{};const key=((c.phone||c.email||c.name||'')+'').toLowerCase().trim();if(!key)return;custMap[key]={tenant_id:cloudTenant,client_id:key,name:c.name||'',phone:c.phone||'',email:c.email||'',address:c.addr||'',is_new:!!c.newCust};});
+    const custRows=Object.values(custMap);
+    if(custRows.length) await sb.from('customers').upsert(custRows,{onConflict:'tenant_id,client_id'});
+    const {data:dbCust}=await sb.from('customers').select('id,client_id').eq('tenant_id',cloudTenant);
+    const custIdByKey={}; (dbCust||[]).forEach(r=>custIdByKey[r.client_id]=r.id);
+    const jobRows=jobs.map(j=>{const c=j.customer||{};const key=((c.phone||c.email||c.name||'')+'').toLowerCase().trim();
+      const clean=Object.assign({},j,{photos:[]}); // photos stay on capturing device in v1 (keeps cloud light)
+      return {tenant_id:cloudTenant,client_id:j.id,customer_id:custIdByKey[key]||null,created_by:cloudUser.id,status:j.status||'open',
+        package_id:j.pkg||null,exterior_ids:j.exterior||[],addon_ids:j.addons||[],reg_total:j.regTotal||0,discount_pct:j.discPct||0,total:j.total||0,
+        photo_consent:!!j.photoConsent,client_updated_at:new Date(j.createdAt).toISOString(),payload:clean};});
+    if(jobRows.length) await sb.from('jobs').upsert(jobRows,{onConflict:'tenant_id,client_id'});
+    const {data:dbJobs}=await sb.from('jobs').select('client_id,payload').eq('tenant_id',cloudTenant);
+    if(dbJobs){
+      const local=loadJobs();const have={};local.forEach(j=>have[j.id]=true);let added=0;
+      dbJobs.forEach(d=>{ if(d.payload && d.client_id && !have[d.client_id]){ local.push(d.payload); added++; } });
+      if(added){ saveJobs(local); const v=document.getElementById('view-jobs'); if(v && !v.classList.contains('hidden')) renderJobs(); }
+    }
+    return true;
+  }catch(e){ console.error('sync',e); if(!silent)alert('Sync issue: '+(e.message||e)); return false; }
+}
+
 /* ============ init ============ */
 applyBrand();
+initCloud();
 if(!bootAuth()){showJobs();}
 </script>
 </body>
