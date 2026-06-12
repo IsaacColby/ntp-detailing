@@ -409,6 +409,20 @@
       <div id="bookingList" style="margin-top:10px"></div>
     </div>
 
+    <div class="card" id="emailCard">
+      <h2>Email messages</h2>
+      <div class="sub">Customize the emails sent for bookings and receipts. Tags you can use: {name} {shop} {phone} {time} {alt_time} {service} {vehicle} {total}</div>
+      <details><summary class="muted" style="font-size:13px;cursor:pointer;padding:6px 0">Appointment confirmed</summary>
+        <label>Subject</label><input id="tpl_confirm_s"><label>Message</label><textarea id="tpl_confirm_b" style="min-height:120px"></textarea></details>
+      <details><summary class="muted" style="font-size:13px;cursor:pointer;padding:6px 0">Suggest another time</summary>
+        <label>Subject</label><input id="tpl_suggest_s"><label>Message</label><textarea id="tpl_suggest_b" style="min-height:120px"></textarea></details>
+      <details><summary class="muted" style="font-size:13px;cursor:pointer;padding:6px 0">Decline</summary>
+        <label>Subject</label><input id="tpl_decline_s"><label>Message</label><textarea id="tpl_decline_b" style="min-height:120px"></textarea></details>
+      <details><summary class="muted" style="font-size:13px;cursor:pointer;padding:6px 0">Receipt</summary>
+        <label>Subject</label><input id="tpl_receipt_s"><label>Message</label><textarea id="tpl_receipt_b" style="min-height:120px"></textarea></details>
+      <button class="btn sec full sm" style="margin-top:10px" onclick="saveTemplates()">Save messages</button>
+    </div>
+
     <div class="card muted" style="font-size:13px">
       <b>This version (offline):</b> size pricing, vehicle auto-sizing, roles/PIN, checkbox intake/delivery, exterior services, robust waiver, team checklist, save/print/email.<br>
       <b>Next phases:</b> cloud sync across devices, auto-email receipts, QuickBooks (customer + invoice + attach PDFs), reports dashboard.
@@ -498,6 +512,12 @@ const defaultSettings={
     extceramic:{compact:null,standard:null,fullsize:null},
     exthead:{compact:null,standard:null,fullsize:null},
     exteng:{compact:null,standard:null,fullsize:null},
+  },
+  templates:{
+    confirm:{subject:'{shop} — Appointment confirmed',body:'Hi {name},\n\nYour appointment is confirmed for {time}.\nService: {service}\nVehicle: {vehicle}\n\nSee you then!\n{shop}\n{phone}'},
+    suggest:{subject:'{shop} — Alternate appointment time',body:'Hi {name},\n\nWe are already booked at {time}. Could you do {alt_time} instead? Reply to confirm and we will lock it in.\n\nThanks,\n{shop}\n{phone}'},
+    decline:{subject:'{shop} — About your requested time',body:'Hi {name},\n\nUnfortunately we are not able to take {time}. Please pick another opening on our booking page, or reply with what works for you.\n\nThanks,\n{shop}\n{phone}'},
+    receipt:{subject:'{shop} — Receipt for {vehicle}',body:'Hi {name},\n\nThank you for choosing {shop}!\n\nVehicle: {vehicle}\nTotal: ${total}\n\nYour receipt and paperwork are attached.\n\n{shop}\n{phone}'}
   },
   users:[]  // {name, role:'owner'|'tech', pin}
 };
@@ -864,8 +884,8 @@ function printInternal(){
 }
 function deleteCurrent(){if(!isOwner()){alert('Only an Owner can delete jobs.');return;}if(confirm('Delete this job permanently?')){saveJobs(loadJobs().filter(j=>j.id!==current.id));showJobs();}}
 function emailCurrent(){const s=getSettings(),j=current,c=j.customer||{};const veh=[j.vehicle.year,j.vehicle.make,j.vehicle.model].filter(Boolean).join(' ');
-  const body=`Hi ${c.name||''},%0D%0A%0D%0AThank you for choosing ${s.name}!%0D%0A%0D%0AVehicle: ${veh}%0D%0ATotal: $${money(j.total)}%0D%0A%0D%0AYour receipt and paperwork are attached.%0D%0A%0D%0A${s.name}%0D%0A${s.phone}`;
-  window.location.href=`mailto:${c.email||''}?subject=${encodeURIComponent(s.name+' — Receipt for '+veh)}&body=${body}`;}
+  const t=getTemplates().receipt||{};const v={name:c.name||'',shop:s.name,phone:s.phone,vehicle:veh,total:money(j.total),service:(PACKAGES.find(p=>p.id===j.pkg)||{}).name||'',time:''};
+  window.location.href='mailto:'+encodeURIComponent(c.email||'')+'?subject='+encodeURIComponent(fillTemplate(t.subject,v))+'&body='+encodeURIComponent(fillTemplate(t.body,v));}
 
 /* ============ settings ============ */
 function showSettings(){
@@ -878,6 +898,7 @@ function showSettings(){
   document.getElementById('usersCard').style.opacity=owner?1:.5;document.getElementById('usersCard').style.pointerEvents=owner?'auto':'none';
   updateCloudUI();
   showBookingUI();
+  renderTemplates();
   showView('settings');setTab('settings');scrollTop();
 }
 function renderMatrix(s){
@@ -1086,7 +1107,7 @@ async function saveBooking(){
 async function pushTenantSettings(){
   if(!sb||!cloudUser||!cloudTenant)return;
   const s=getSettings();
-  try{ await sb.from('tenants').update({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing,booking:bookingCfg}}).eq('id',cloudTenant); }catch(e){console.error('pushTenant',e);}
+  try{ await sb.from('tenants').update({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing,booking:bookingCfg,templates:s.templates}}).eq('id',cloudTenant); }catch(e){console.error('pushTenant',e);}
 }
 async function loadBookings(){
   const box=document.getElementById('bookingList');
@@ -1119,27 +1140,29 @@ function bookingToJobIdx(i){ const b=_bookings[i]; if(!b)return;
   setBooking(b.id,'booked'); if(cloudUser)syncNow(true);
   alert('Created a job from this booking — find it in Jobs.');
 }
+function fillTemplate(str,v){return (str||'').replace(/\{(\w+)\}/g,function(m,k){return (v&&v[k]!=null)?v[k]:'';});}
+function getTemplates(){return getSettings().templates||{};}
+function bkVars(b,extra){const s=getSettings();return Object.assign({name:b.name||'',shop:s.name,phone:s.phone,time:b.slot_label||'',service:(PACKAGES.find(p=>p.id===b.package_id)||{}).name||'',vehicle:b.vehicle||'',total:b.price||0},extra||{});}
 function bkEmail(b,subject,body){
   if(!b.email){ alert('No email on this request. Contact '+(b.name||'the customer')+' at '+(b.phone||'(no phone given)')); return; }
   window.location.href='mailto:'+encodeURIComponent(b.email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
 }
-function approveBooking(i){ const b=_bookings[i]; if(!b)return; const s=getSettings();
-  bookingToJobIdx(i); // creates the job + marks booked + syncs
-  bkEmail(b, s.name+' — Appointment confirmed',
-    'Hi '+(b.name||'')+',\n\nYour appointment is confirmed for '+(b.slot_label||'')+'.\nService: '+((PACKAGES.find(p=>p.id===b.package_id)||{}).name||'')+(b.vehicle?'\nVehicle: '+b.vehicle:'')+'\n\nSee you then!\n'+s.name+'\n'+s.phone);
+function approveBooking(i){ const b=_bookings[i]; if(!b)return;
+  bookingToJobIdx(i); const t=getTemplates().confirm||{}, v=bkVars(b);
+  bkEmail(b, fillTemplate(t.subject,v), fillTemplate(t.body,v));
 }
-function declineBooking(i){ const b=_bookings[i]; if(!b)return; const s=getSettings();
+function declineBooking(i){ const b=_bookings[i]; if(!b)return;
   if(!confirm('Decline '+(b.name||'this request')+'?'))return;
-  setBooking(b.id,'declined');
-  bkEmail(b, s.name+' — About your requested time',
-    'Hi '+(b.name||'')+',\n\nUnfortunately we\'re not able to take '+(b.slot_label||'that time')+'. Please pick another opening on our booking page, or reply with what works for you and we\'ll get you in.\n\nThanks,\n'+s.name+'\n'+s.phone);
+  setBooking(b.id,'declined'); const t=getTemplates().decline||{}, v=bkVars(b);
+  bkEmail(b, fillTemplate(t.subject,v), fillTemplate(t.body,v));
 }
-function suggestBooking(i){ const b=_bookings[i]; if(!b)return; const s=getSettings();
-  const t=prompt('Suggest a different time for '+(b.name||'this customer')+' (e.g. "Tue Jun 16 at 1 PM"):'); if(!t)return;
-  setBooking(b.id,'suggested');
-  bkEmail(b, s.name+' — Alternate appointment time',
-    'Hi '+(b.name||'')+',\n\nWe\'re already booked at '+(b.slot_label||'your requested time')+'. Could you do '+t+' instead? Reply to confirm and we\'ll lock it in.\n\nThanks,\n'+s.name+'\n'+s.phone);
+function suggestBooking(i){ const b=_bookings[i]; if(!b)return;
+  const alt=prompt('Suggest a different time for '+(b.name||'this customer')+' (e.g. "Tue Jun 16 at 1 PM"):'); if(!alt)return;
+  setBooking(b.id,'suggested'); const t=getTemplates().suggest||{}, v=bkVars(b,{alt_time:alt});
+  bkEmail(b, fillTemplate(t.subject,v), fillTemplate(t.body,v));
 }
+function renderTemplates(){const t=getTemplates();['confirm','suggest','decline','receipt'].forEach(k=>{const o=t[k]||{};val('tpl_'+k+'_s',o.subject||'');const ta=document.getElementById('tpl_'+k+'_b');if(ta)ta.value=o.body||'';});}
+function saveTemplates(){const s=getSettings();s.templates=s.templates||{};['confirm','suggest','decline','receipt'].forEach(k=>{const ta=document.getElementById('tpl_'+k+'_b');s.templates[k]={subject:gv('tpl_'+k+'_s'),body:ta?ta.value:''};});setSettings(s);if(cloudUser)pushTenantSettings();alert('Messages saved.');}
 
 /* ============ init ============ */
 applyBrand();
