@@ -118,6 +118,7 @@ const DEFAULT_BOOKING={openHour:9,closeHour:17,slotMins:120,leadDays:1,horizonDa
 
 let sb, tenant, pricing={}, bk=DEFAULT_BOOKING;
 let sel={pkg:null,size:'standard',addons:new Set(),day:null,slot:null};
+let bookedSet=new Set();
 const qs=new URLSearchParams(location.search); const TID=qs.get('t');
 
 async function start(){
@@ -126,6 +127,7 @@ async function start(){
   const {data,error}=await sb.from('tenants').select('*').eq('id',TID).single();
   if(error||!data){ document.getElementById('loading').innerHTML='<div class="err">Could not load this shop. Try again later.</div>'; return; }
   tenant=data; pricing=(data.settings&&data.settings.pricing)||{}; bk=Object.assign({},DEFAULT_BOOKING,(data.settings&&data.settings.booking)||{});
+  try{ const {data:bs}=await sb.from('public_booked_slots').select('slot_start').eq('tenant_id',TID); (bs||[]).forEach(r=>bookedSet.add(new Date(r.slot_start).getTime())); }catch(e){}
   document.getElementById('bizName').textContent=data.name||'Book your detail';
   document.getElementById('bizContact').textContent=[data.address,data.phone].filter(Boolean).join(' · ');
   if(data.logo_url){ document.getElementById('logo').innerHTML='<img src="'+esc(data.logo_url)+'" onerror="this.parentNode.textContent=\'NTP\'">'; }
@@ -153,6 +155,8 @@ function renderSlots(){
   if(!sel.day){document.getElementById('slots').innerHTML='';return;}
   const slots=[]; for(let h=bk.openHour;h*60<bk.closeHour*60;h+=bk.slotMins/60){ const hr=Math.floor(h); const mn=Math.round((h-hr)*60); slots.push({hr,mn}); }
   document.getElementById('slots').innerHTML=slots.map(s=>{const lbl=fmtTime(s.hr,s.mn); const id=s.hr+':'+s.mn;
+    const dt=new Date(sel.day+'T00:00:00'); dt.setHours(s.hr,s.mn,0,0);
+    if(bookedSet.has(dt.getTime())) return `<div class="slot" style="opacity:.35;text-decoration:line-through;cursor:not-allowed" title="Booked">${lbl}</div>`;
     return `<div class="slot ${sel.slot===id?'on':''}" onclick="pickSlot('${id}','${lbl}')">${lbl}</div>`;}).join('');
 }
 function pickSlot(id,lbl){ sel.slot=id; sel.slotLabel=lbl; renderSlots(); }
