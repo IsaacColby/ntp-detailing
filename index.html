@@ -420,6 +420,16 @@
       <div id="bookingList" style="margin-top:10px"></div>
     </div>
 
+    <div class="card" id="waiverCard">
+      <h2>Waiver &amp; terms</h2>
+      <div class="sub">The legal text customers sign. Edit it here (use {shop} for your business name) — replace it with your attorney's wording once reviewed. Renders exactly as typed.</div>
+      <textarea id="waiver_text" style="min-height:280px;font-size:13px"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn sec" onclick="saveWaiver()">Save waiver</button>
+        <button class="btn ghost" onclick="resetWaiver()">Reset to default</button>
+      </div>
+    </div>
+
     <div class="card" id="squareCard">
       <h2>Deposit (Square)</h2>
       <div class="sub">Collect a deposit to hold bookings. Make a payment link in your existing Square account and paste it here — the booking page sends customers there to pay. Same Square account and money.</div>
@@ -483,11 +493,16 @@
 
   <!-- ===== SCHEDULE ===== -->
   <section id="view-schedule" class="hidden">
-    <div style="display:flex;align-items:center;gap:8px;margin:6px 0 12px">
+    <div style="display:flex;gap:6px;margin:6px 0 8px">
+      <button class="btn sm" id="sm_day" onclick="schSetMode('day')">Day</button>
+      <button class="btn sm sec" id="sm_week" onclick="schSetMode('week')">Week</button>
+      <button class="btn sm sec" id="sm_month" onclick="schSetMode('month')">Month</button>
+      <button class="btn sm sec" style="margin-left:auto" onclick="schToday()">Today</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
       <button class="btn ghost sm" onclick="schMove(-1)">‹ Prev</button>
       <h2 id="schDate" style="flex:1;text-align:center;margin:0;font-size:16px"></h2>
       <button class="btn ghost sm" onclick="schMove(1)">Next ›</button>
-      <button class="btn sec sm" onclick="schToday()">Today</button>
     </div>
     <div id="scheduleBody"></div>
   </section>
@@ -561,6 +576,7 @@ const defaultSettings={
   logoUrl:'https://images.squarespace-cdn.com/content/v1/69d114ffec065905f2ab9ff7/9187648e-689e-449f-84c8-505d51a3110f/2F89C713-2634-44B8-A2E2-BD16CC095D9F.PNG?format=300w',
   messagesOn:true,
   square:{link:'',amount:'',require:false},
+  waiverText:'',
   discount:0,
   pricing:{
     refresh:{compact:199,standard:null,fullsize:null},
@@ -971,6 +987,7 @@ function showSettings(){
   showBookingUI();
   renderTemplates();
   renderSquare();
+  renderWaiver();
   renderLinks();
   showView('settings');setTab('settings');scrollTop();
 }
@@ -1007,7 +1024,52 @@ function exportData(){const blob=new Blob([JSON.stringify({jobs:loadJobs(),setti
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.jobs)saveJobs(d.jobs);if(d.settings)setSettings(d.settings);alert('Backup imported.');applyBrand();showJobs();}catch(err){alert('Could not read that file.');}};r.readAsText(f);e.target.value='';}
 
 /* ============ waiver ============ */
-function waiverHTML(s){const n=esc(s.name);return `
+const DEFAULT_WAIVER=`{shop} — Service Authorization & Liability Waiver
+
+I am the owner of the vehicle described, or am authorized by the owner to approve this work. I authorize {shop} ("the Shop") to perform the detailing services selected, and to start, move, and park the vehicle as needed.
+
+1. Pre-existing conditions. Detailing uses cleaning agents, water, steam, heat, brushing, and agitation, which can reveal or, despite reasonable care, affect pre-existing conditions — worn, faded, brittle, previously repaired, or aftermarket materials; loose trim, clips, and fasteners; existing stains, odors, burns, or residue; and sensitive electronics. I confirm the conditions noted at intake and accept that additional pre-existing issues may surface.
+
+2. Results are not guaranteed. Complete removal of all stains, odors, pet hair, or wear cannot be guaranteed. Some materials may react unpredictably. The Shop will use reasonable, industry-standard methods.
+
+3. Water, moisture & electronics. Interior cleaning introduces moisture; drying times vary and residual dampness or odor can persist temporarily. The Shop is not liable for pre-existing or latent electrical faults, corrosion, or component failure that moisture may expose.
+
+4. Odor, ozone & biohazard. Ozone and odor treatments reduce but may not fully eliminate odors. I will not occupy the vehicle during or immediately after ozone treatment as directed. For biohazard, mold, or heavy contamination, remediation has limits and re-treatment may cost more.
+
+5. Exterior services (if selected). Washing, clay bar, polishing, coating, and headlight restoration carry inherent risk on neglected, damaged, repainted, wrapped, or aftermarket finishes. Existing scratches, swirls, chips, or weak clear coat may become more visible or be affected despite reasonable care.
+
+6. Personal property & valuables. I am responsible for removing all valuables, cash, firearms, electronics, documents, and personal items. The Shop is not responsible for loss of or damage to items left in the vehicle.
+
+7. Child seats & accessories. If child seats or accessories are present, I am responsible for their proper reinstallation and safety after service.
+
+8. Estimates, timing & authorization to exceed. Quoted prices are estimates based on size and condition. If scope changes, the Shop will contact me before exceeding the estimate; if unreachable, the Shop may stop at the estimated amount. Completion times are estimates.
+
+9. Photographs. The Shop may take before/after photos for records and quality control. Marketing use requires my separate consent.
+
+10. Release & limitation of liability. To the fullest extent permitted by New Hampshire law, I release {shop}, its owner, employees, and agents from claims arising from (a) pre-existing conditions, (b) the inherent limits of detailing above, and (c) personal property left in the vehicle. This release does not apply to damage caused by the Shop's own negligence or willful misconduct. Except where prohibited by law, the Shop's total liability is limited to the cost of the service performed.
+
+11. Claims window. Any concern must be reported within 48 hours of pickup, with the vehicle made available for inspection.
+
+12. Cancellation & no-show. Appointments require at least 24 hours' notice to cancel or reschedule. No-shows or late cancellations may be charged up to 50% or forfeit any deposit.
+
+13. Deposits. A deposit may be required to reserve a booking; it applies to the final price and is non-refundable if cancelled inside the notice window or missed.
+
+14. Late pickup & storage. Vehicles should be picked up within 24 hours of completion; vehicles left beyond that may incur a storage fee. The Shop is not responsible for vehicles or contents left on the premises.
+
+15. Refunds, satisfaction & re-do. If not satisfied, notify the Shop within 48 hours; the Shop will re-clean the affected area at no charge. Refunds are at the Shop's discretion and not given for results limited by pre-existing conditions or normal wear.
+
+16. Right to refuse or stop service. The Shop may decline or stop service for unsafe conditions, undisclosed biohazard, or vehicles that risk damage, and may charge for work performed.
+
+17. Unclaimed / abandoned vehicles. A vehicle left more than 15 days after a completion or contact notice, without response, may be handled as permitted under New Hampshire law, including liens for unpaid charges.
+
+18. Governing law. This agreement is governed by the laws of the State of New Hampshire. If any provision is unenforceable, the remaining provisions stay in effect.
+
+I have read and understood this authorization and waiver, had the chance to ask questions, and sign voluntarily.
+
+DRAFT — have a licensed New Hampshire attorney review and adapt before customer use. Dollar amounts and time windows are starting defaults.`;
+function getWaiver(){const w=getSettings().waiverText;return (w&&w.trim())?w:DEFAULT_WAIVER;}
+function waiverHTML(s){return '<div style="white-space:pre-wrap">'+esc(fillTemplate(getWaiver(),{shop:s.name}))+'</div>';}
+function _oldWaiver(s){const n=esc(s.name);return `
 <b>${n} — Service Authorization &amp; Liability Waiver</b>
 <p>I am the owner of the vehicle described, or am authorized by the owner to approve this work. I authorize ${n} ("the Shop") to perform the detailing services selected, and to start, move, and park the vehicle as needed to perform them.</p>
 <h4>1. Pre-existing conditions</h4><p>Detailing uses cleaning agents, water and steam extraction, heat, brushing, and agitation. These can reveal or, despite reasonable care, affect pre-existing conditions — including worn, faded, brittle, previously repaired, or aftermarket materials; loose or aging trim, clips, and fasteners; existing stains, odors, burns, or adhesive residue; and sensitive electronics. I confirm the conditions documented at intake and accept that additional pre-existing issues may surface during service.</p>
@@ -1174,6 +1236,7 @@ async function loadTenantSettings(){
       if(st.square){s.square=st.square;ch=true;}
       if(st.pricing){s.pricing=st.pricing;ch=true;}
       if(st.teamNames){s.teamNames=st.teamNames;ch=true;}
+      if(st.waiverText!=null){s.waiverText=st.waiverText;ch=true;}
       if(ch)setSettings(s);
     }
   }catch(e){}
@@ -1181,11 +1244,19 @@ async function loadTenantSettings(){
 function teamNames(){const s=getSettings();return [...new Set([...((s.users||[]).map(u=>u.name)),...(s.teamNames||[])].filter(Boolean))];}
 
 /* ============ schedule ============ */
-let schDay=new Date(); let _sched=[];
-function showSchedule(){renderSchedule();showView('schedule');setTab('schedule');scrollTop();}
-function schMove(n){schDay.setDate(schDay.getDate()+n);renderSchedule();}
+let schDay=new Date(); let _sched=[]; let schMode='day';
+function showSchedule(){schSetMode(schMode);showView('schedule');setTab('schedule');scrollTop();}
+function schSetMode(m){schMode=m;['day','week','month'].forEach(x=>{const b=document.getElementById('sm_'+x);if(b)b.className='btn sm '+(x===m?'':'sec');});renderSchedule();}
+function schMove(n){if(schMode==='day')schDay.setDate(schDay.getDate()+n);else if(schMode==='week')schDay.setDate(schDay.getDate()+7*n);else schDay.setMonth(schDay.getMonth()+n);renderSchedule();}
 function schToday(){schDay=new Date();renderSchedule();}
-async function renderSchedule(){
+function schYmd(dt){return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
+const SCH_COL={requested:'var(--warn)',booked:'var(--brand)',in_bay:'#a855f7',done:'var(--good)'};
+async function schFetch(d0,d1){const {data}=await sb.from('bookings').select('*').eq('tenant_id',cloudTenant).gte('slot_start',d0.toISOString()).lt('slot_start',d1.toISOString()).neq('status','declined').order('slot_start',{ascending:true});return data||[];}
+function schOpenDay(k){schDay=new Date(k+'T00:00:00');schSetMode('day');}
+async function renderSchedule(){const b=document.getElementById('scheduleBody');if(!b)return;if(!cloudUser||!cloudTenant){const hd=document.getElementById('schDate');if(hd)hd.textContent='';b.innerHTML='<div class="muted">Sign in to cloud (Settings → Cloud sync) to use the schedule across devices.</div>';return;}b.innerHTML='<div class="muted">Loading…</div>';if(schMode==='week')return renderSchedWeek();if(schMode==='month')return renderSchedMonth();return renderSchedDay();}
+async function renderSchedWeek(){const body=document.getElementById('scheduleBody'),hd=document.getElementById('schDate');const start=new Date(schDay);start.setHours(0,0,0,0);start.setDate(start.getDate()-start.getDay());const end=new Date(start);end.setDate(end.getDate()+7);if(hd)hd.textContent='Week of '+start.toLocaleDateString('en-US',{month:'short',day:'numeric'});const data=await schFetch(start,end);const byDay={};data.forEach(x=>{const k=schYmd(new Date(x.slot_start));(byDay[k]=byDay[k]||[]).push(x);});let html='';for(let i=0;i<7;i++){const d=new Date(start);d.setDate(d.getDate()+i);const k=schYmd(d);const list=byDay[k]||[];html+='<div class="card" style="margin:6px 0;padding:12px"><div style="font-weight:700">'+d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' <span class="muted" style="font-weight:400;font-size:12px">'+(list.length?list.length+' appt'+(list.length>1?'s':''):'open')+'</span></div>'+list.map(x=>{const t=new Date(x.slot_start).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});const col=SCH_COL[x.status]||'var(--line)';return '<div style="border-left:3px solid '+col+';padding:4px 8px;margin:5px 0;font-size:13px">'+t+' — '+esc(x.name||'')+(x.assigned_tech?' ('+esc(x.assigned_tech)+')':'')+'</div>';}).join('')+'<button class="btn sm ghost" style="margin-top:6px" onclick="schOpenDay(\''+k+'\')">Open day</button></div>';}body.innerHTML=html;}
+async function renderSchedMonth(){const body=document.getElementById('scheduleBody'),hd=document.getElementById('schDate');const first=new Date(schDay.getFullYear(),schDay.getMonth(),1);const last=new Date(schDay.getFullYear(),schDay.getMonth()+1,1);if(hd)hd.textContent=schDay.toLocaleDateString('en-US',{month:'long',year:'numeric'});const data=await schFetch(first,last);const cnt={};data.forEach(x=>{const k=schYmd(new Date(x.slot_start));cnt[k]=(cnt[k]||0)+1;});let html='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">';['S','M','T','W','T','F','S'].forEach(d=>html+='<div class="muted" style="text-align:center;font-size:11px;font-weight:700">'+d+'</div>');for(let i=0;i<first.getDay();i++)html+='<div></div>';const daysIn=new Date(schDay.getFullYear(),schDay.getMonth()+1,0).getDate();for(let d=1;d<=daysIn;d++){const k=schYmd(new Date(schDay.getFullYear(),schDay.getMonth(),d));const c=cnt[k]||0;html+='<div onclick="schOpenDay(\''+k+'\')" style="border:1px solid var(--line);border-radius:8px;min-height:54px;padding:4px;cursor:pointer;background:'+(c?'#172033':'var(--panel)')+'"><div style="font-size:12px">'+d+'</div>'+(c?'<div style="font-size:11px;color:var(--brand);font-weight:700;margin-top:2px">'+c+'</div>':'')+'</div>';}html+='</div>';body.innerHTML=html;}
+async function renderSchedDay(){
   const body=document.getElementById('scheduleBody'),hd=document.getElementById('schDate');
   if(hd)hd.textContent=schDay.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
   if(!body)return;
@@ -1242,7 +1313,7 @@ async function saveBooking(){
 async function pushTenantSettings(){
   if(!sb||!cloudUser||!cloudTenant)return;
   const s=getSettings();
-  try{ await sb.from('tenants').update({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing,booking:bookingCfg,templates:s.templates,square:s.square,teamNames:(s.users||[]).map(u=>u.name)}}).eq('id',cloudTenant); }catch(e){console.error('pushTenant',e);}
+  try{ await sb.from('tenants').update({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing,booking:bookingCfg,templates:s.templates,square:s.square,teamNames:(s.users||[]).map(u=>u.name),waiverText:s.waiverText}}).eq('id',cloudTenant); }catch(e){console.error('pushTenant',e);}
 }
 async function loadBookings(){
   const box=document.getElementById('bookingList');
@@ -1303,6 +1374,9 @@ function messagesOn(){return getSettings().messagesOn!==false;}
 function renderSquare(){const sq=getSettings().square||{};val('sq_link',sq.link||'');val('sq_amount',sq.amount||'');const c=document.getElementById('chip_sqReq');if(c)c.classList.toggle('on',!!sq.require);}
 function toggleSqReq(){const s=getSettings();s.square=s.square||{};s.square.require=!s.square.require;setSettings(s);renderSquare();if(cloudUser)pushTenantSettings();}
 function saveSquare(){const s=getSettings();s.square=s.square||{};s.square.link=gv('sq_link');s.square.amount=gv('sq_amount');setSettings(s);if(cloudUser)pushTenantSettings();alert('Deposit settings saved.');}
+function renderWaiver(){const ta=document.getElementById('waiver_text');if(ta)ta.value=getWaiver();}
+function saveWaiver(){const s=getSettings();const ta=document.getElementById('waiver_text');s.waiverText=ta?ta.value:'';setSettings(s);if(cloudUser)pushTenantSettings();alert('Waiver saved — it shows on new jobs.');}
+function resetWaiver(){if(!confirm('Reset the waiver to the built-in default?'))return;const s=getSettings();s.waiverText='';setSettings(s);renderWaiver();if(cloudUser)pushTenantSettings();}
 function renderLinks(){const el=document.getElementById('linksBody');if(!el)return;
   if(cloudUser&&cloudTenant){
     const book='https://isaaccolby.github.io/ntp-detailing/booking.html?t='+cloudTenant;
