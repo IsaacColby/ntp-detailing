@@ -382,6 +382,26 @@
       </div>
     </div>
 
+    <div class="card" id="bookingCard">
+      <h2>Online booking</h2>
+      <div class="sub">Customers pick a service + time on your website. Share this link or embed it on Squarespace.</div>
+      <div id="bookingLinkWrap" class="banner" style="word-break:break-all">Sign in to cloud (above) to get your booking link.</div>
+      <label>Open days</label>
+      <div class="chips" id="bkDays"></div>
+      <div class="row">
+        <div><label>Opens (hr, 24h)</label><input id="bk_open" inputmode="numeric" placeholder="9"></div>
+        <div><label>Closes (hr, 24h)</label><input id="bk_close" inputmode="numeric" placeholder="17"></div>
+      </div>
+      <div class="row">
+        <div><label>Slot length (min)</label><input id="bk_slot" inputmode="numeric" placeholder="120"></div>
+        <div><label>Earliest (days out)</label><input id="bk_lead" inputmode="numeric" placeholder="1"></div>
+        <div><label>Show next (days)</label><input id="bk_horizon" inputmode="numeric" placeholder="14"></div>
+      </div>
+      <button class="btn sec full" style="margin-top:10px" onclick="saveBooking()">Save availability</button>
+      <button class="btn full" style="margin-top:8px" onclick="loadBookings()">View booking requests</button>
+      <div id="bookingList" style="margin-top:10px"></div>
+    </div>
+
     <div class="card muted" style="font-size:13px">
       <b>This version (offline):</b> size pricing, vehicle auto-sizing, roles/PIN, checkbox intake/delivery, exterior services, robust waiver, team checklist, save/print/email.<br>
       <b>Next phases:</b> cloud sync across devices, auto-email receipts, QuickBooks (customer + invoice + attach PDFs), reports dashboard.
@@ -843,6 +863,7 @@ function showSettings(){
   document.getElementById('pricingCard').style.opacity=owner?1:.5;document.getElementById('pricingCard').style.pointerEvents=owner?'auto':'none';
   document.getElementById('usersCard').style.opacity=owner?1:.5;document.getElementById('usersCard').style.pointerEvents=owner?'auto':'none';
   updateCloudUI();
+  showBookingUI();
   showView('settings');setTab('settings');scrollTop();
 }
 function renderMatrix(s){
@@ -865,7 +886,7 @@ function saveSettings(){
     s.discount=parseFloat(gv('s_discount'))||0;
     document.querySelectorAll('#priceMatrix input').forEach(inp=>{const pkg=inp.dataset.pkg,sz=inp.dataset.sz;s.pricing[pkg]=s.pricing[pkg]||{};const v=inp.value.trim();s.pricing[pkg][sz]=v===''?null:parseFloat(v);});
   }
-  setSettings(s);applyBrand();alert('Settings saved.');showJobs();
+  setSettings(s);applyBrand();if(cloudUser)pushTenantSettings();alert('Settings saved.');showJobs();
 }
 function applyBrand(){const s=getSettings();document.getElementById('hdrName').textContent=s.name;
   const img=s.logoUrl?`<img src="${esc(s.logoUrl)}" alt="logo" style="width:100%;height:100%;object-fit:contain;background:#fff" onerror="this.parentNode.textContent='NTP'">`:'NTP';
@@ -951,6 +972,7 @@ async function onCloudSignedIn(user){
       if(pe){console.error('profile',pe);alert('Cloud setup error: '+pe.message);return;}
       cloudTenant=tid;
     } else { cloudTenant=prof.tenant_id; }
+    await loadTenantSettings();
   }catch(e){ console.error('signin',e); }
 }
 async function cloudSignOut(){ if(sb)await sb.auth.signOut(); cloudUser=null;cloudTenant=null;updateCloudUI(); }
@@ -984,6 +1006,67 @@ async function syncNow(silent){
     }
     return true;
   }catch(e){ console.error('sync',e); if(!silent)alert('Sync issue: '+(e.message||e)); return false; }
+}
+
+/* ============ online booking (owner side) ============ */
+const DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let bookingCfg={openHour:9,closeHour:17,slotMins:120,leadDays:1,horizonDays:14,openDays:[1,2,3,4,5,6]};
+let _bookings=[];
+async function loadTenantSettings(){
+  if(!sb||!cloudTenant)return;
+  try{ const {data}=await sb.from('tenants').select('settings').eq('id',cloudTenant).maybeSingle(); if(data&&data.settings&&data.settings.booking){ bookingCfg=Object.assign(bookingCfg,data.settings.booking); } }catch(e){}
+}
+function showBookingUI(){
+  const wrap=document.getElementById('bookingLinkWrap'); if(!wrap)return;
+  if(cloudUser&&cloudTenant){
+    const url='https://isaaccolby.github.io/ntp-detailing/booking.html?t='+cloudTenant;
+    wrap.innerHTML='Your booking link:<br><b style="font-size:13px">'+esc(url)+'</b><br><button class="btn sm sec" style="margin-top:8px" onclick="copyText(\''+url+'\')">Copy link</button>';
+  } else { wrap.textContent='Sign in to cloud (above) to get your booking link.'; }
+  const dd=document.getElementById('bkDays'); if(dd)dd.innerHTML=DAYNAMES.map((d,i)=>`<div class="chip ${bookingCfg.openDays.includes(i)?'on':''}" onclick="toggleBkDay(${i})"><div class="bx">${bookingCfg.openDays.includes(i)?'✓':''}</div><span>${d}</span></div>`).join('');
+  val('bk_open',bookingCfg.openHour);val('bk_close',bookingCfg.closeHour);val('bk_slot',bookingCfg.slotMins);val('bk_lead',bookingCfg.leadDays);val('bk_horizon',bookingCfg.horizonDays);
+}
+function toggleBkDay(i){ const s=new Set(bookingCfg.openDays); s.has(i)?s.delete(i):s.add(i); bookingCfg.openDays=[...s].sort(); showBookingUI(); }
+function copyText(t){ try{navigator.clipboard.writeText(t);}catch(e){} alert('Copied:\n'+t); }
+async function saveBooking(){
+  if(!cloudUser||!cloudTenant){alert('Sign in to cloud first (the card above).');return;}
+  bookingCfg.openHour=parseInt(gv('bk_open'))||9; bookingCfg.closeHour=parseInt(gv('bk_close'))||17; bookingCfg.slotMins=parseInt(gv('bk_slot'))||120; bookingCfg.leadDays=parseInt(gv('bk_lead'))||1; bookingCfg.horizonDays=parseInt(gv('bk_horizon'))||14;
+  await pushTenantSettings(); alert('Availability saved — your booking page is live.');
+}
+async function pushTenantSettings(){
+  if(!sb||!cloudUser||!cloudTenant)return;
+  const s=getSettings();
+  try{ await sb.from('tenants').update({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing,booking:bookingCfg}}).eq('id',cloudTenant); }catch(e){console.error('pushTenant',e);}
+}
+async function loadBookings(){
+  const box=document.getElementById('bookingList');
+  if(!cloudUser||!cloudTenant){box.innerHTML='<div class="muted">Sign in to cloud to see requests.</div>';return;}
+  box.innerHTML='<div class="muted">Loading…</div>';
+  const {data,error}=await sb.from('bookings').select('*').eq('tenant_id',cloudTenant).order('slot_start',{ascending:true});
+  if(error){box.innerHTML='<div class="muted">Error: '+esc(error.message)+'</div>';return;}
+  _bookings=data||[];
+  if(!_bookings.length){box.innerHTML='<div class="muted">No booking requests yet.</div>';return;}
+  box.innerHTML=_bookings.map((b,i)=>{
+    const pkg=(PACKAGES.find(p=>p.id===b.package_id)||{}).name||b.package_id||'';
+    const st=b.status||'requested';
+    return `<div class="card" style="margin:8px 0;background:var(--panel2)">
+      <div style="font-weight:700">${esc(b.name||'')} · <span class="muted">${esc(b.phone||b.email||'')}</span></div>
+      <div class="muted" style="font-size:13px">${esc(b.slot_label||'')}</div>
+      <div style="font-size:14px;margin-top:4px">${esc(pkg)} · ${esc(sizeLabel(b.size))} · $${b.price||0}${b.vehicle?' · '+esc(b.vehicle):''}</div>
+      ${b.notes?'<div class="muted" style="font-size:13px">"'+esc(b.notes)+'"</div>':''}
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        ${st==='requested'?`<button class="btn sm" onclick="bookingToJobIdx(${i})">Make into job</button><button class="btn sm ghost" onclick="setBooking('${b.id}','declined')">Decline</button>`:`<span class="pill ${st==='booked'?'done':'open'}">${esc(st)}</span>`}
+      </div></div>`;
+  }).join('');
+}
+async function setBooking(id,status){ await sb.from('bookings').update({status}).eq('id',id); loadBookings(); }
+function bookingToJobIdx(i){ const b=_bookings[i]; if(!b)return;
+  const j=blankJob();
+  j.customer={name:b.name||'',phone:b.phone||'',email:b.email||'',addr:'',ref:['Online booking'],newCust:true};
+  const vp=(b.vehicle||'').split(' '); j.vehicle={year:vp[0]||'',make:vp[1]||'',model:vp.slice(2).join(' ')||'',size:b.size||'standard'};
+  j.pkg=b.package_id||null; j.addons=b.addon_ids||[]; j.status='open';
+  const jobs=loadJobs(); jobs.push(j); saveJobs(jobs);
+  setBooking(b.id,'booked'); if(cloudUser)syncNow(true);
+  alert('Created a job from this booking — find it in Jobs.');
 }
 
 /* ============ init ============ */

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Book — North to Perfect Detailing</title>
+<style>
+  :root{--bg:#0f1115;--panel:#181c24;--panel2:#1f2530;--line:#2c3442;--ink:#eef2f8;--muted:#9aa6b8;--brand:#3b82f6;--good:#22c55e;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:17px;line-height:1.45}
+  .wrap{max-width:640px;margin:0 auto;padding:18px;padding-bottom:60px}
+  header{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+  header .logo{width:48px;height:48px;border-radius:12px;background:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;overflow:hidden}
+  header .logo img{width:100%;height:100%;object-fit:contain;background:#fff}
+  header h1{font-size:18px;margin:0}
+  header small{color:var(--muted);font-size:13px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+  h2{font-size:15px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:8px}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 5px;font-weight:600}
+  input,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:12px;border-radius:11px;font-size:16px;font-family:inherit}
+  input:focus,textarea:focus{outline:none;border-color:var(--brand)}
+  .opt{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);margin:8px 0;cursor:pointer}
+  .opt.on{border-color:var(--brand);background:#172033}
+  .opt .bx{width:22px;height:22px;border-radius:6px;border:2px solid var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff}
+  .opt.on .bx{background:var(--brand);border-color:var(--brand)}
+  .opt .nm{font-weight:600}.opt .ds{color:var(--muted);font-size:12.5px}
+  .opt .pr{margin-left:auto;font-weight:700;white-space:nowrap}
+  .sizes{display:flex;gap:8px}.sizes .s{flex:1;text-align:center;padding:11px 6px;border:1px solid var(--line);border-radius:11px;background:var(--panel2);cursor:pointer}
+  .sizes .s.on{border-color:var(--brand);background:#172033}.sizes .s b{display:block;font-size:14px}.sizes .s small{color:var(--muted);font-size:11px}
+  .days{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+  .day{flex:0 0 auto;min-width:66px;text-align:center;padding:10px 8px;border:1px solid var(--line);border-radius:11px;background:var(--panel2);cursor:pointer}
+  .day.on{border-color:var(--brand);background:#172033}.day b{display:block;font-size:15px}.day small{color:var(--muted);font-size:11px}
+  .slots{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .slot{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);cursor:pointer;font-size:14px}
+  .slot.on{border-color:var(--good);background:#10241a;color:#bff5d4}
+  .total{display:flex;justify-content:space-between;font-size:20px;font-weight:800;padding:14px;border-top:1px dashed var(--line);margin-top:6px}
+  .btn{appearance:none;border:none;border-radius:12px;padding:15px;font-size:17px;font-weight:700;color:#fff;background:var(--brand);width:100%;cursor:pointer;font-family:inherit}
+  .btn:disabled{opacity:.5}
+  .muted{color:var(--muted);font-size:13px}
+  .center{text-align:center}
+  .ok{text-align:center;padding:40px 16px}.ok .big{font-size:54px}
+  .hidden{display:none!important}
+  .err{background:#2a1416;border:1px solid #5a2a2a;color:#f5b5b5;border-radius:11px;padding:12px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="loading" class="center muted" style="padding:60px 0">Loading booking…</div>
+
+  <div id="app" class="hidden">
+    <header>
+      <div class="logo" id="logo">NTP</div>
+      <div><h1 id="bizName">North to Perfect Detailing</h1><small id="bizContact"></small></div>
+    </header>
+
+    <div class="card">
+      <h2>1. Choose your service</h2>
+      <div class="sub">Interior detailing. Pick the level that fits your vehicle.</div>
+      <div id="pkgs"></div>
+    </div>
+
+    <div class="card">
+      <h2>2. Vehicle size</h2>
+      <div class="sub">Pricing depends on size.</div>
+      <div class="sizes" id="sizes"></div>
+      <label>Vehicle (year / make / model)</label>
+      <input id="veh" placeholder="2021 Toyota RAV4">
+    </div>
+
+    <div class="card">
+      <h2>3. Add-ons (optional)</h2>
+      <div id="addons"></div>
+    </div>
+
+    <div class="card">
+      <h2>4. Pick a time</h2>
+      <div class="sub" id="slotHint">Select a day, then a time.</div>
+      <div class="days" id="days"></div>
+      <div class="slots" id="slots"></div>
+    </div>
+
+    <div class="card">
+      <h2>5. Your details</h2>
+      <label>Name</label><input id="cname" placeholder="Full name">
+      <label>Phone</label><input id="cphone" type="tel" placeholder="(603) 555-0123">
+      <label>Email</label><input id="cemail" type="email" placeholder="name@email.com">
+      <label>Notes (optional)</label><textarea id="cnotes" placeholder="Anything we should know?"></textarea>
+      <div class="total"><span>Estimated total</span><span id="total">$0</span></div>
+      <div class="muted" style="margin:6px 0 12px">Final price confirmed at drop-off based on condition. This is a request — we'll confirm your time.</div>
+      <button class="btn" id="submit" onclick="submitBooking()">Request this time</button>
+      <div id="formErr" class="err hidden" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <div id="done" class="hidden ok">
+    <div class="big">✅</div>
+    <h2 style="font-size:22px">Request sent!</h2>
+    <p class="muted" id="doneMsg"></p>
+    <p class="muted">We'll text or email to confirm your appointment.</p>
+  </div>
+
+  <div id="badlink" class="hidden"><div class="err">This booking link is missing its shop code. Please use the link from the shop's website.</div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPA_URL='https://edipivcbdbjlhpymftpe.supabase.co';
+const SUPA_KEY='sb_publishable_GwNbWRlcKsZEHI8ZiwhXgQ_vUJsOtGV';
+const PACKAGES=[
+  {id:'refresh',name:'Refresh Detailing',desc:'Basic / monthly touch-up'},
+  {id:'full',name:'Full Detailing',desc:'Deep / moderate build-up'},
+  {id:'restore',name:'Restoration Detailing',desc:'Intense / neglected vehicles'},
+];
+const SIZES=[{id:'compact',label:'Compact',desc:'Sedans / hatchbacks'},{id:'standard',label:'Standard',desc:'Crossovers / small trucks'},{id:'fullsize',label:'Full-Size',desc:'3-row / large trucks / vans'}];
+const ADDONS=[{id:'pethair',name:'Pet Hair Removal',price:50},{id:'ozone',name:'Ozone Treatment',price:50},{id:'extwash',name:'Exterior Wash',price:99}];
+const DEFAULT_BOOKING={openHour:9,closeHour:17,slotMins:120,leadDays:1,horizonDays:14,openDays:[1,2,3,4,5,6]}; // Mon-Sat 9-5, 2h slots
+
+let sb, tenant, pricing={}, bk=DEFAULT_BOOKING;
+let sel={pkg:null,size:'standard',addons:new Set(),day:null,slot:null};
+const qs=new URLSearchParams(location.search); const TID=qs.get('t');
+
+async function start(){
+  if(!TID){ show('badlink'); document.getElementById('loading').classList.add('hidden'); return; }
+  sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+  const {data,error}=await sb.from('tenants').select('*').eq('id',TID).single();
+  if(error||!data){ document.getElementById('loading').innerHTML='<div class="err">Could not load this shop. Try again later.</div>'; return; }
+  tenant=data; pricing=(data.settings&&data.settings.pricing)||{}; bk=Object.assign({},DEFAULT_BOOKING,(data.settings&&data.settings.booking)||{});
+  document.getElementById('bizName').textContent=data.name||'Book your detail';
+  document.getElementById('bizContact').textContent=[data.address,data.phone].filter(Boolean).join(' · ');
+  if(data.logo_url){ document.getElementById('logo').innerHTML='<img src="'+esc(data.logo_url)+'" onerror="this.parentNode.textContent=\'NTP\'">'; }
+  renderPkgs(); renderSizes(); renderAddons(); renderDays(); calc();
+  document.getElementById('loading').classList.add('hidden'); show('app');
+}
+function priceFor(pkgId){ const row=pricing[pkgId]; if(!row)return null; const v=row[sel.size]; return (v==null||v==='')?null:Number(v); }
+function renderPkgs(){
+  document.getElementById('pkgs').innerHTML=PACKAGES.map(p=>{const pr=priceFor(p.id);const on=sel.pkg===p.id;
+    return `<div class="opt ${on?'on':''}" onclick="pickPkg('${p.id}')"><div class="bx">${on?'✓':''}</div><div><div class="nm">${p.name}</div><div class="ds">${p.desc}</div></div><div class="pr">${pr==null?'—':'$'+pr}</div></div>`;}).join('');
+}
+function renderSizes(){ document.getElementById('sizes').innerHTML=SIZES.map(s=>`<div class="s ${sel.size===s.id?'on':''}" onclick="pickSize('${s.id}')"><b>${s.label}</b><small>${s.desc}</small></div>`).join(''); }
+function renderAddons(){ document.getElementById('addons').innerHTML=ADDONS.map(a=>`<div class="opt ${sel.addons.has(a.id)?'on':''}" onclick="toggleAddon('${a.id}')"><div class="bx">${sel.addons.has(a.id)?'✓':''}</div><div><div class="nm">${a.name}</div></div><div class="pr">+$${a.price}</div></div>`).join(''); }
+function pickPkg(id){ sel.pkg=sel.pkg===id?null:id; renderPkgs(); calc(); }
+function pickSize(id){ sel.size=id; renderPkgs(); renderSizes(); calc(); }
+function toggleAddon(id){ sel.addons.has(id)?sel.addons.delete(id):sel.addons.add(id); renderAddons(); calc(); }
+function renderDays(){
+  const days=[]; const today=new Date(); today.setHours(0,0,0,0);
+  for(let i=bk.leadDays;i<bk.leadDays+bk.horizonDays;i++){ const d=new Date(today); d.setDate(d.getDate()+i); if(bk.openDays.includes(d.getDay())) days.push(d); }
+  document.getElementById('days').innerHTML=days.map(d=>{const key=d.toISOString().slice(0,10);
+    return `<div class="day ${sel.day===key?'on':''}" onclick="pickDay('${key}')"><b>${d.getDate()}</b><small>${d.toLocaleDateString('en-US',{weekday:'short'})}<br>${d.toLocaleDateString('en-US',{month:'short'})}</small></div>`;}).join('');
+}
+function pickDay(key){ sel.day=key; sel.slot=null; renderDays(); renderSlots(); }
+function renderSlots(){
+  if(!sel.day){document.getElementById('slots').innerHTML='';return;}
+  const slots=[]; for(let h=bk.openHour;h*60<bk.closeHour*60;h+=bk.slotMins/60){ const hr=Math.floor(h); const mn=Math.round((h-hr)*60); slots.push({hr,mn}); }
+  document.getElementById('slots').innerHTML=slots.map(s=>{const lbl=fmtTime(s.hr,s.mn); const id=s.hr+':'+s.mn;
+    return `<div class="slot ${sel.slot===id?'on':''}" onclick="pickSlot('${id}','${lbl}')">${lbl}</div>`;}).join('');
+}
+function pickSlot(id,lbl){ sel.slot=id; sel.slotLabel=lbl; renderSlots(); }
+function fmtTime(h,m){ const ap=h>=12?'PM':'AM'; let hh=h%12; if(hh===0)hh=12; return hh+(m?(':'+String(m).padStart(2,'0')):':00')+' '+ap; }
+function calc(){ let t=0; const pr=priceFor(sel.pkg); if(pr)t+=pr; sel.addons.forEach(id=>{const a=ADDONS.find(x=>x.id===id);if(a)t+=a.price;}); sel._total=t; document.getElementById('total').textContent='$'+t; }
+async function submitBooking(){
+  const err=document.getElementById('formErr'); err.classList.add('hidden');
+  if(!sel.pkg) return showErr('Please choose a service.');
+  if(!sel.day||!sel.slot) return showErr('Please pick a day and time.');
+  const name=v('cname'), phone=v('cphone'), email=v('cemail');
+  if(!name||(!phone&&!email)) return showErr('Please enter your name and a phone or email.');
+  const [hr,mn]=sel.slot.split(':').map(Number); const dt=new Date(sel.day+'T00:00:00'); dt.setHours(hr,mn,0,0);
+  const btn=document.getElementById('submit'); btn.disabled=true; btn.textContent='Sending…';
+  const row={tenant_id:TID,name,phone,email,vehicle:v('veh'),size:sel.size,package_id:sel.pkg,addon_ids:[...sel.addons],
+    slot_start:dt.toISOString(),slot_label:dt.toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric'})+' at '+sel.slotLabel,
+    price:sel._total,notes:v('cnotes'),status:'requested'};
+  const {error}=await sb.from('bookings').insert(row);
+  if(error){ btn.disabled=false; btn.textContent='Request this time'; return showErr('Could not send: '+error.message); }
+  document.getElementById('doneMsg').textContent=(PACKAGES.find(p=>p.id===sel.pkg)||{}).name+' — '+row.slot_label;
+  show('done'); document.getElementById('app').classList.add('hidden'); window.scrollTo(0,0);
+}
+function showErr(m){ const e=document.getElementById('formErr'); e.textContent=m; e.classList.remove('hidden'); }
+function show(id){ document.getElementById(id).classList.remove('hidden'); }
+function v(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+start();
+</script>
+</body>
+</html>
