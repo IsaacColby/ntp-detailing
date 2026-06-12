@@ -97,6 +97,7 @@
     <div class="big">✅</div>
     <h2 style="font-size:22px">Request sent!</h2>
     <p class="muted" id="doneMsg"></p>
+    <div id="depositArea"></div>
     <p class="muted">We'll text or email to confirm your appointment.</p>
   </div>
 
@@ -177,6 +178,8 @@ async function submitBooking(){
   if(error){ btn.disabled=false; btn.textContent='Request this time'; return showErr('Could not send: '+error.message); }
   document.getElementById('doneMsg').textContent=(PACKAGES.find(p=>p.id===sel.pkg)||{}).name+' — '+row.slot_label;
   show('done'); document.getElementById('app').classList.add('hidden'); window.scrollTo(0,0);
+  const sq=(tenant.settings&&tenant.settings.square)||{};
+  if(sq.link){ document.getElementById('depositArea').innerHTML='<a class="btn" style="display:inline-block;text-decoration:none;margin-top:14px" href="'+esc(sq.link)+'" target="_blank" rel="noopener">Pay '+(sq.amount?'$'+esc(sq.amount)+' ':'')+'deposit to hold your spot</a>'; }
 }
 function showErr(m){ const e=document.getElementById('formErr'); e.textContent=m; e.classList.remove('hidden'); }
 function show(id){ document.getElementById(id).classList.remove('hidden'); }

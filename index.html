@@ -409,9 +409,19 @@
       <div id="bookingList" style="margin-top:10px"></div>
     </div>
 
+    <div class="card" id="squareCard">
+      <h2>Deposit (Square)</h2>
+      <div class="sub">Collect a deposit to hold bookings. Make a payment link in your existing Square account and paste it here — the booking page sends customers there to pay. Same Square account and money.</div>
+      <div class="chips"><div class="chip" id="chip_sqReq" onclick="toggleSqReq()"><div class="bx"></div><span>Ask for a deposit at booking</span></div></div>
+      <label>Square deposit payment link</label><input id="sq_link" placeholder="https://square.link/...">
+      <label>Deposit amount shown to customer ($)</label><input id="sq_amount" inputmode="decimal" placeholder="25">
+      <button class="btn sec full sm" style="margin-top:10px" onclick="saveSquare()">Save deposit settings</button>
+    </div>
+
     <div class="card" id="emailCard">
       <h2>Email messages</h2>
       <div class="sub">Customize the emails sent for bookings and receipts. Tags you can use: {name} {shop} {phone} {time} {alt_time} {service} {vehicle} {total}</div>
+      <div class="chips" style="margin:6px 0"><div class="chip" id="chip_msgOn" onclick="toggleMsgOn()"><div class="bx"></div><span>Send outgoing messages (master switch)</span></div></div>
       <details><summary class="muted" style="font-size:13px;cursor:pointer;padding:6px 0">Appointment confirmed</summary>
         <label>Subject</label><input id="tpl_confirm_s"><label>Message</label><textarea id="tpl_confirm_b" style="min-height:120px"></textarea></details>
       <details><summary class="muted" style="font-size:13px;cursor:pointer;padding:6px 0">Suggest another time</summary>
@@ -423,9 +433,24 @@
       <button class="btn sec full sm" style="margin-top:10px" onclick="saveTemplates()">Save messages</button>
     </div>
 
-    <div class="card muted" style="font-size:13px">
-      <b>This version (offline):</b> size pricing, vehicle auto-sizing, roles/PIN, checkbox intake/delivery, exterior services, robust waiver, team checklist, save/print/email.<br>
-      <b>Next phases:</b> cloud sync across devices, auto-email receipts, QuickBooks (customer + invoice + attach PDFs), reports dashboard.
+    <div class="card" id="linksCard">
+      <h2>Your links &amp; website</h2>
+      <div class="sub">Add these to your website. The <b>customer booking link</b> is the one you put on Squarespace so customers can book.</div>
+      <div id="linksBody" class="muted" style="font-size:13px">Sign in to cloud (above) to generate your links.</div>
+    </div>
+
+    <div class="card" id="helpCard">
+      <h2>Help &amp; guide</h2>
+      <div class="sub">How each part works.</div>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Creating a job &amp; paperwork</summary><div class="muted" style="font-size:13px;padding-bottom:6px">Tap <b>+ New Job</b>. Step through Customer → Vehicle (size auto-detects from make/model) → Condition (tap the boxes + add photos) → Services (price follows the vehicle size) → Team checklist → Waiver (finger signature) → Delivery (signature at pickup). Save it. Reopen any job to print a <b>Customer PDF</b>, print the internal <b>Team sheet</b>, or email a receipt.</div></details>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Cloud login &amp; multiple devices</summary><div class="muted" style="font-size:13px;padding-bottom:6px">Under <b>Cloud sync &amp; login</b>, enter an email + password once to create your owner login. Sign in with the same email on the iPad, phone, and computer and they all share the same jobs and customers. The app still works offline; it syncs when back online.</div></details>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Customers</summary><div class="muted" style="font-size:13px;padding-bottom:6px">On Step 1 of a job, search a name or phone under "Returning customer" to auto-fill a repeat customer. Every customer is saved and shared across your devices.</div></details>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Online booking &amp; schedule</summary><div class="muted" style="font-size:13px;padding-bottom:6px">Set your open days/hours and slot length under <b>Online booking</b>, then share your booking link (see "Your links" above) on your website. Customer requests appear under "View booking requests" — <b>Approve &amp; confirm</b> (makes a job + emails the customer), <b>Suggest time</b>, or <b>Decline</b>. A time only becomes unavailable to others once you approve a request.</div></details>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Pricing</summary><div class="muted" style="font-size:13px;padding-bottom:6px">In the <b>Pricing matrix</b>, set each package's price for Compact / Standard / Full-Size. Set your new-customer discount %. These prices also drive the booking page.</div></details>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Team &amp; PINs</summary><div class="muted" style="font-size:13px;padding-bottom:6px">Add staff under <b>Team &amp; permissions</b> with a name, role (Owner or Tech), and 4-digit PIN. Techs can run jobs but can't change pricing/settings or delete. Use "Lock / switch user" to hand the iPad to another person.</div></details>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Email messages</summary><div class="muted" style="font-size:13px;padding-bottom:6px">Customize every message under <b>Email messages</b> using tags like {name} and {time}. The "Send outgoing messages" master switch turns all automatic emails off when you need to.</div></details>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Reports</summary><div class="muted" style="font-size:13px;padding-bottom:6px">The <b>📊 Reports</b> tab shows jobs, revenue, average ticket, new vs repeat customers, turnaround time, and where your customers come from.</div></details>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">QuickBooks &amp; deposits</summary><div class="muted" style="font-size:13px;padding-bottom:6px">When QuickBooks is connected, completed jobs create an invoice and file the signed paperwork to the customer's QBO record. For deposits, paste a Square deposit link (made in your Square account) so customers can pay to hold a booking.</div></details>
     </div>
   </section>
   <!-- ===== REPORTS ===== -->
@@ -476,6 +501,7 @@ const ADDONS=[
   {id:'mobile15',name:'Mobile Service (1–15 mi)',price:49},
   {id:'mobile30',name:'Mobile Service (15–30 mi)',price:79},
 ];
+const MAKES=['Acura','Audi','BMW','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ford','GMC','Honda','Hyundai','Infiniti','Jeep','Kia','Land Rover','Lexus','Lincoln','Mazda','Mercedes-Benz','Mini','Mitsubishi','Nissan','Porsche','Ram','Subaru','Tesla','Toyota','Volkswagen','Volvo'];
 const REF_OPTS=['Referral','Repeat customer','Facebook / Instagram','Google','Drove by','Other'];
 const COND_INT=['Existing stains','Burns / melt marks','Tears / rips in seats','Worn / faded trim','Cracked dashboard','Heavy pet hair','Smoke odor','Pet odor','Other strong odor','Mold / mildew','Sticky / greasy residue','Spilled liquids','Heavy sand / salt / dirt','Biohazard (vomit/blood)','Aftermarket electronics','Loose / missing trim','Child seats present','Personal items present'];
 const COND_EXT=['Existing scratches','Dents / dings','Paint chips','Faded / oxidized paint','Rust spots','Cracked / chipped glass','Hazed headlights','Prior body repair'];
@@ -500,6 +526,8 @@ const defaultSettings={
   name:'North to Perfect Detailing', addr:'209 Stage Rd, Sanbornton, NH 03269',
   phone:'(603) 520-1881', email:'valentina@ntpdetailing.com', emailsrc:'Gmail',
   logoUrl:'https://images.squarespace-cdn.com/content/v1/69d114ffec065905f2ab9ff7/9187648e-689e-449f-84c8-505d51a3110f/2F89C713-2634-44B8-A2E2-BD16CC095D9F.PNG?format=300w',
+  messagesOn:true,
+  square:{link:'',amount:'',require:false},
   discount:0,
   pricing:{
     refresh:{compact:199,standard:null,fullsize:null},
@@ -615,6 +643,7 @@ function buildJobUI(){
   document.getElementById('refChips').innerHTML=REF_OPTS.map(o=>chip('ref',o)).join('');
   // size buttons
   document.getElementById('sizeBtns').innerHTML=SIZES.map(s=>`<div class="sb" data-size="${s.id}" onclick="pickSize('${s.id}')"><b>${s.label}</b><small>${s.desc}</small></div>`).join('');
+  const ml=document.getElementById('makelist'); if(ml)ml.innerHTML=MAKES.map(m=>'<option value="'+m+'">').join('');
   // condition chips
   document.getElementById('condInt').innerHTML=COND_INT.map(o=>chip('ci',o,true)).join('');
   document.getElementById('condExt').innerHTML=COND_EXT.map(o=>chip('ce',o,true)).join('');
@@ -683,7 +712,12 @@ function autoCat(){
   const make=gv('v_make'),model=gv('v_model');
   const size=categorize(make,model);
   const badge=document.getElementById('sizeAuto');
-  if(size && (!current.vehicle.size || current.vehicle._auto)){pickSize(size,true);current.vehicle._auto=true;badge.classList.remove('hidden');}
+  applySizeRestriction(size);
+  if(size && (!current.vehicle.size || current.vehicle._auto)){pickSize(size,true);current.vehicle._auto=true;if(badge)badge.classList.remove('hidden');}
+}
+function applySizeRestriction(minId){
+  const order={compact:0,standard:1,fullsize:2}; const min=(minId&&order[minId]!=null)?order[minId]:0;
+  document.querySelectorAll('#sizeBtns .sb').forEach(b=>{const dis=(order[b.dataset.size]||0)<min; b.style.opacity=dis?'.35':'1'; b.style.pointerEvents=dis?'none':'auto'; b.title=dis?'Too small for this vehicle':'';});
 }
 function pickSize(size,silent){
   if(!size)return;current.vehicle.size=size;if(!silent)current.vehicle._auto=false;
@@ -883,7 +917,8 @@ function printInternal(){
    <script>window.print()<\/script></body></html>`);w.document.close();
 }
 function deleteCurrent(){if(!isOwner()){alert('Only an Owner can delete jobs.');return;}if(confirm('Delete this job permanently?')){saveJobs(loadJobs().filter(j=>j.id!==current.id));showJobs();}}
-function emailCurrent(){const s=getSettings(),j=current,c=j.customer||{};const veh=[j.vehicle.year,j.vehicle.make,j.vehicle.model].filter(Boolean).join(' ');
+function emailCurrent(){if(!messagesOn()){alert('Outgoing messages are turned off (Settings → Email messages).');return;}
+  const s=getSettings(),j=current,c=j.customer||{};const veh=[j.vehicle.year,j.vehicle.make,j.vehicle.model].filter(Boolean).join(' ');
   const t=getTemplates().receipt||{};const v={name:c.name||'',shop:s.name,phone:s.phone,vehicle:veh,total:money(j.total),service:(PACKAGES.find(p=>p.id===j.pkg)||{}).name||'',time:''};
   window.location.href='mailto:'+encodeURIComponent(c.email||'')+'?subject='+encodeURIComponent(fillTemplate(t.subject,v))+'&body='+encodeURIComponent(fillTemplate(t.body,v));}
 
@@ -899,6 +934,8 @@ function showSettings(){
   updateCloudUI();
   showBookingUI();
   renderTemplates();
+  renderSquare();
+  renderLinks();
   showView('settings');setTab('settings');scrollTop();
 }
 function renderMatrix(s){
@@ -1107,7 +1144,7 @@ async function saveBooking(){
 async function pushTenantSettings(){
   if(!sb||!cloudUser||!cloudTenant)return;
   const s=getSettings();
-  try{ await sb.from('tenants').update({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing,booking:bookingCfg,templates:s.templates}}).eq('id',cloudTenant); }catch(e){console.error('pushTenant',e);}
+  try{ await sb.from('tenants').update({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing,booking:bookingCfg,templates:s.templates,square:s.square}}).eq('id',cloudTenant); }catch(e){console.error('pushTenant',e);}
 }
 async function loadBookings(){
   const box=document.getElementById('bookingList');
@@ -1144,6 +1181,7 @@ function fillTemplate(str,v){return (str||'').replace(/\{(\w+)\}/g,function(m,k)
 function getTemplates(){return getSettings().templates||{};}
 function bkVars(b,extra){const s=getSettings();return Object.assign({name:b.name||'',shop:s.name,phone:s.phone,time:b.slot_label||'',service:(PACKAGES.find(p=>p.id===b.package_id)||{}).name||'',vehicle:b.vehicle||'',total:b.price||0},extra||{});}
 function bkEmail(b,subject,body){
+  if(!messagesOn())return;
   if(!b.email){ alert('No email on this request. Contact '+(b.name||'the customer')+' at '+(b.phone||'(no phone given)')); return; }
   window.location.href='mailto:'+encodeURIComponent(b.email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
 }
@@ -1161,7 +1199,21 @@ function suggestBooking(i){ const b=_bookings[i]; if(!b)return;
   setBooking(b.id,'suggested'); const t=getTemplates().suggest||{}, v=bkVars(b,{alt_time:alt});
   bkEmail(b, fillTemplate(t.subject,v), fillTemplate(t.body,v));
 }
-function renderTemplates(){const t=getTemplates();['confirm','suggest','decline','receipt'].forEach(k=>{const o=t[k]||{};val('tpl_'+k+'_s',o.subject||'');const ta=document.getElementById('tpl_'+k+'_b');if(ta)ta.value=o.body||'';});}
+function renderTemplates(){const t=getTemplates();['confirm','suggest','decline','receipt'].forEach(k=>{const o=t[k]||{};val('tpl_'+k+'_s',o.subject||'');const ta=document.getElementById('tpl_'+k+'_b');if(ta)ta.value=o.body||'';});const c=document.getElementById('chip_msgOn');if(c)c.classList.toggle('on',getSettings().messagesOn!==false);}
+function toggleMsgOn(){const s=getSettings();s.messagesOn=(s.messagesOn===false);setSettings(s);if(cloudUser)pushTenantSettings();const c=document.getElementById('chip_msgOn');if(c)c.classList.toggle('on',s.messagesOn!==false);}
+function messagesOn(){return getSettings().messagesOn!==false;}
+function renderSquare(){const sq=getSettings().square||{};val('sq_link',sq.link||'');val('sq_amount',sq.amount||'');const c=document.getElementById('chip_sqReq');if(c)c.classList.toggle('on',!!sq.require);}
+function toggleSqReq(){const s=getSettings();s.square=s.square||{};s.square.require=!s.square.require;setSettings(s);renderSquare();if(cloudUser)pushTenantSettings();}
+function saveSquare(){const s=getSettings();s.square=s.square||{};s.square.link=gv('sq_link');s.square.amount=gv('sq_amount');setSettings(s);if(cloudUser)pushTenantSettings();alert('Deposit settings saved.');}
+function renderLinks(){const el=document.getElementById('linksBody');if(!el)return;
+  if(cloudUser&&cloudTenant){
+    const book='https://isaaccolby.github.io/ntp-detailing/booking.html?t='+cloudTenant;
+    const app='https://isaaccolby.github.io/ntp-detailing/';
+    el.innerHTML='<div style="margin:6px 0"><b style="color:var(--ink)">Customer booking link</b> — put this on your website:<br><span style="word-break:break-all">'+esc(book)+'</span><br><button class="btn sm sec" style="margin-top:4px" onclick="copyText(\''+book+'\')">Copy</button></div>'+
+      '<div style="margin:12px 0"><b style="color:var(--ink)">Staff app link</b> — bookmark / add to home screen on each device:<br><span style="word-break:break-all">'+esc(app)+'</span><br><button class="btn sm sec" style="margin-top:4px" onclick="copyText(\''+app+'\')">Copy</button></div>'+
+      '<div style="font-size:12px;margin-top:6px">On Squarespace: add a <b>Button</b> block, set its link to the customer booking link above, and label it "Book Now".</div>';
+  } else { el.textContent='Sign in to cloud (above) to generate your links.'; }
+}
 function saveTemplates(){const s=getSettings();s.templates=s.templates||{};['confirm','suggest','decline','receipt'].forEach(k=>{const ta=document.getElementById('tpl_'+k+'_b');s.templates[k]={subject:gv('tpl_'+k+'_s'),body:ta?ta.value:''};});setSettings(s);if(cloudUser)pushTenantSettings();alert('Messages saved.');}
 
 /* ============ init ============ */
