@@ -382,6 +382,13 @@
       </div>
     </div>
 
+    <div class="card" id="qboCard">
+      <h2>QuickBooks Online</h2>
+      <div class="sub">Connect this shop's QuickBooks to auto-create invoices and file signed paperwork. <b>The shop owner authorizes their own books</b> — you sign into your own QuickBooks, nothing is shared with the app.</div>
+      <div id="qboStatus" class="muted" style="font-size:13px">Not connected.</div>
+      <button class="btn full" style="margin-top:10px" onclick="connectQBO()">Connect QuickBooks</button>
+    </div>
+
     <div class="card" id="bookingCard">
       <h2>Online booking</h2>
       <div class="sub">Customers pick a service + time on your website. Share this link or embed it on Squarespace.</div>
@@ -407,11 +414,18 @@
       <b>Next phases:</b> cloud sync across devices, auto-email receipts, QuickBooks (customer + invoice + attach PDFs), reports dashboard.
     </div>
   </section>
+  <!-- ===== REPORTS ===== -->
+  <section id="view-reports" class="hidden">
+    <h2 style="margin:6px 0 0">Reports</h2>
+    <div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:8px">Use &amp; efficiency at a glance.</div>
+    <div id="reportsBody"></div>
+  </section>
 </div>
 
 <nav class="tabbar no-print">
   <button id="tab-jobs" class="on" onclick="showJobs()"><span class="ic">📋</span>Jobs</button>
   <button id="tab-new" onclick="startNewJob()"><span class="ic">➕</span>New</button>
+  <button id="tab-reports" onclick="showReports()"><span class="ic">📊</span>Reports</button>
   <button id="tab-settings" onclick="showSettings()"><span class="ic">⚙️</span>Settings</button>
 </nav>
 
@@ -547,8 +561,8 @@ function checkPin(){
 function lockNow(){sessionStorage.removeItem(SESS);session=null;const s=getSettings();if(s.users.length){showLock();}else{alert('Add team members in Settings to enable PIN lock.');}}
 
 /* ============ view switching ============ */
-function showView(id){['jobs','job','detail','settings'].forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==id));}
-function setTab(t){['jobs','new','settings'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('on',x===t));}
+function showView(id){['jobs','job','detail','settings','reports'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.classList.toggle('hidden',v!==id);});}
+function setTab(t){['jobs','new','settings','reports'].forEach(x=>{const e=document.getElementById('tab-'+x);if(e)e.classList.toggle('on',x===t);});}
 
 /* ============ jobs list ============ */
 function showJobs(){renderJobs();showView('jobs');setTab('jobs');scrollTop();}
@@ -1006,6 +1020,43 @@ async function syncNow(silent){
     }
     return true;
   }catch(e){ console.error('sync',e); if(!silent)alert('Sync issue: '+(e.message||e)); return false; }
+}
+
+/* ============ quickbooks (self-service connect) ============ */
+const QBO_CONNECT_URL=''; // product-level: set to the Supabase qbo-connect function URL once the one-time QuickBooks app key is configured. Then every shop self-connects with no further setup.
+function connectQBO(){
+  if(!cloudUser||!cloudTenant){alert('Sign in to cloud first (the card above), then connect QuickBooks.');return;}
+  if(!QBO_CONNECT_URL){alert("QuickBooks connect is wired and ready. It activates once the one-time product key is configured by the account owner. After that, this button sends you to QuickBooks to approve — you sign into your OWN books; the app never sees your password.");return;}
+  window.location.href=QBO_CONNECT_URL+'?t='+encodeURIComponent(cloudTenant);
+}
+
+/* ============ reports ============ */
+function showReports(){renderReports();showView('reports');setTab('reports');scrollTop();}
+function rTile(label,val){return `<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;flex:1;min-width:120px"><div style="font-size:24px;font-weight:800">${val}</div><div class="muted" style="font-size:12px">${label}</div></div>`;}
+function rBars(obj,money){const ks=Object.keys(obj);if(!ks.length)return '<div class="muted">No data yet.</div>';const mx=Math.max.apply(null,ks.map(k=>obj[k]))||1;return ks.map(k=>`<div style="margin:7px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(k)}</span><span>${money?'$'+moneyf(obj[k]):obj[k]}</span></div><div style="height:8px;background:var(--panel2);border-radius:6px;overflow:hidden;margin-top:3px"><div style="height:100%;width:${Math.round(obj[k]/mx*100)}%;background:var(--brand)"></div></div></div>`).join('');}
+function moneyf(n){return Math.round(n||0).toLocaleString('en-US');}
+function renderReports(){
+  const done=loadJobs().filter(j=>j.status==='done');
+  const now=Date.now(),d=new Date();const mStart=new Date(d.getFullYear(),d.getMonth(),1).getTime();const wStart=now-6*864e5;
+  const tof=j=>j.deliveredAt||j.createdAt;
+  const rev=done.reduce((t,j)=>t+(+j.total||0),0);
+  const revM=done.filter(j=>tof(j)>=mStart).reduce((t,j)=>t+(+j.total||0),0);
+  const avg=done.length?Math.round(rev/done.length):0;
+  const jM=done.filter(j=>tof(j)>=mStart).length, jW=done.filter(j=>tof(j)>=wStart).length;
+  const newC=done.filter(j=>j.customer&&j.customer.newCust).length, rep=done.length-newC;
+  const turns=done.filter(j=>j.deliveredAt&&j.createdAt).map(j=>(j.deliveredAt-j.createdAt)/3600000);
+  const avgTurn=turns.length?(turns.reduce((a,b)=>a+b,0)/turns.length):0;
+  const byPkg={},bySize={},revByPkg={};
+  done.forEach(j=>{const pn=(PACKAGES.find(p=>p.id===j.pkg)||{}).name||'Other';byPkg[pn]=(byPkg[pn]||0)+1;revByPkg[pn]=(revByPkg[pn]||0)+(+j.total||0);const sn=sizeLabel(j.vehicle&&j.vehicle.size)||'—';bySize[sn]=(bySize[sn]||0)+1;});
+  const body=document.getElementById('reportsBody');if(!body)return;
+  body.innerHTML=`
+    <div class="row" style="gap:10px">${rTile('Completed jobs',done.length)}${rTile('This month',jM)}${rTile('This week',jW)}</div>
+    <div class="row" style="gap:10px;margin-top:10px">${rTile('Total revenue','$'+moneyf(rev))}${rTile('Revenue this month','$'+moneyf(revM))}${rTile('Avg ticket','$'+moneyf(avg))}</div>
+    <div class="row" style="gap:10px;margin-top:10px">${rTile('New customers',newC)}${rTile('Repeat customers',rep)}${rTile('Avg turnaround',avgTurn?avgTurn.toFixed(1)+'h':'—')}</div>
+    <div class="card"><h2>Jobs by package</h2>${rBars(byPkg)}</div>
+    <div class="card"><h2>Revenue by package</h2>${rBars(revByPkg,true)}</div>
+    <div class="card"><h2>Jobs by vehicle size</h2>${rBars(bySize)}</div>
+    <div class="muted" style="font-size:12px">Based on completed jobs on this device (and all synced jobs when signed in to cloud).</div>`;
 }
 
 /* ============ online booking (owner side) ============ */
