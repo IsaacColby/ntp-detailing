@@ -1023,10 +1023,9 @@ async function syncNow(silent){
 }
 
 /* ============ quickbooks (self-service connect) ============ */
-const QBO_CONNECT_URL=''; // product-level: set to the Supabase qbo-connect function URL once the one-time QuickBooks app key is configured. Then every shop self-connects with no further setup.
+const QBO_CONNECT_URL=SUPA_URL+'/functions/v1/qbo-connect'; // one product app (env secrets); every shop connects its own books here.
 function connectQBO(){
   if(!cloudUser||!cloudTenant){alert('Sign in to cloud first (the card above), then connect QuickBooks.');return;}
-  if(!QBO_CONNECT_URL){alert("QuickBooks connect is wired and ready. It activates once the one-time product key is configured by the account owner. After that, this button sends you to QuickBooks to approve — you sign into your OWN books; the app never sees your password.");return;}
   window.location.href=QBO_CONNECT_URL+'?t='+encodeURIComponent(cloudTenant);
 }
 
@@ -1046,8 +1045,8 @@ function renderReports(){
   const newC=done.filter(j=>j.customer&&j.customer.newCust).length, rep=done.length-newC;
   const turns=done.filter(j=>j.deliveredAt&&j.createdAt).map(j=>(j.deliveredAt-j.createdAt)/3600000);
   const avgTurn=turns.length?(turns.reduce((a,b)=>a+b,0)/turns.length):0;
-  const byPkg={},bySize={},revByPkg={};
-  done.forEach(j=>{const pn=(PACKAGES.find(p=>p.id===j.pkg)||{}).name||'Other';byPkg[pn]=(byPkg[pn]||0)+1;revByPkg[pn]=(revByPkg[pn]||0)+(+j.total||0);const sn=sizeLabel(j.vehicle&&j.vehicle.size)||'—';bySize[sn]=(bySize[sn]||0)+1;});
+  const byPkg={},bySize={},revByPkg={},bySrc={};
+  done.forEach(j=>{const pn=(PACKAGES.find(p=>p.id===j.pkg)||{}).name||'Other';byPkg[pn]=(byPkg[pn]||0)+1;revByPkg[pn]=(revByPkg[pn]||0)+(+j.total||0);const sn=sizeLabel(j.vehicle&&j.vehicle.size)||'—';bySize[sn]=(bySize[sn]||0)+1;((j.customer&&j.customer.ref)||[]).forEach(r=>{bySrc[r]=(bySrc[r]||0)+1;});});
   const body=document.getElementById('reportsBody');if(!body)return;
   body.innerHTML=`
     <div class="row" style="gap:10px">${rTile('Completed jobs',done.length)}${rTile('This month',jM)}${rTile('This week',jW)}</div>
@@ -1056,6 +1055,7 @@ function renderReports(){
     <div class="card"><h2>Jobs by package</h2>${rBars(byPkg)}</div>
     <div class="card"><h2>Revenue by package</h2>${rBars(revByPkg,true)}</div>
     <div class="card"><h2>Jobs by vehicle size</h2>${rBars(bySize)}</div>
+    <div class="card"><h2>Where customers come from</h2>${rBars(bySrc)}</div>
     <div class="muted" style="font-size:12px">Based on completed jobs on this device (and all synced jobs when signed in to cloud).</div>`;
 }
 
