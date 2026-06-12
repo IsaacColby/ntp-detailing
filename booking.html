@@ -120,6 +120,8 @@ const DEFAULT_BOOKING={openHour:9,closeHour:17,slotMins:120,leadDays:1,horizonDa
 let sb, tenant, pricing={}, bk=DEFAULT_BOOKING;
 let sel={pkg:null,size:'standard',addons:new Set(),day:null,slot:null};
 let bookedSet=new Set();
+let bookedByDay={};
+function ymd(dt){return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
 const qs=new URLSearchParams(location.search); const TID=qs.get('t');
 
 async function start(){
@@ -128,7 +130,7 @@ async function start(){
   const {data,error}=await sb.from('tenants').select('*').eq('id',TID).single();
   if(error||!data){ document.getElementById('loading').innerHTML='<div class="err">Could not load this shop. Try again later.</div>'; return; }
   tenant=data; pricing=(data.settings&&data.settings.pricing)||{}; bk=Object.assign({},DEFAULT_BOOKING,(data.settings&&data.settings.booking)||{});
-  try{ const {data:bs}=await sb.from('public_booked_slots').select('slot_start').eq('tenant_id',TID); (bs||[]).forEach(r=>bookedSet.add(new Date(r.slot_start).getTime())); }catch(e){}
+  try{ const {data:bs}=await sb.from('public_booked_slots').select('slot_start').eq('tenant_id',TID); (bs||[]).forEach(r=>{const d=new Date(r.slot_start);bookedSet.add(d.getTime());bookedByDay[ymd(d)]=(bookedByDay[ymd(d)]||0)+1;}); }catch(e){}
   document.getElementById('bizName').textContent=data.name||'Book your detail';
   document.getElementById('bizContact').textContent=[data.address,data.phone].filter(Boolean).join(' · ');
   if(data.logo_url){ document.getElementById('logo').innerHTML='<img src="'+esc(data.logo_url)+'" onerror="this.parentNode.textContent=\'NTP\'">'; }
@@ -147,8 +149,10 @@ function pickSize(id){ sel.size=id; renderPkgs(); renderSizes(); calc(); }
 function toggleAddon(id){ sel.addons.has(id)?sel.addons.delete(id):sel.addons.add(id); renderAddons(); calc(); }
 function renderDays(){
   const days=[]; const today=new Date(); today.setHours(0,0,0,0);
-  for(let i=bk.leadDays;i<bk.leadDays+bk.horizonDays;i++){ const d=new Date(today); d.setDate(d.getDate()+i); if(bk.openDays.includes(d.getDay())) days.push(d); }
-  document.getElementById('days').innerHTML=days.map(d=>{const key=d.toISOString().slice(0,10);
+  const cap=bk.capacity||0, black=bk.blackouts||[];
+  for(let i=bk.leadDays;i<bk.leadDays+bk.horizonDays;i++){ const d=new Date(today); d.setDate(d.getDate()+i); const k=ymd(d);
+    if(!bk.openDays.includes(d.getDay()))continue; if(black.includes(k))continue; if(cap>0&&(bookedByDay[k]||0)>=cap)continue; days.push(d); }
+  document.getElementById('days').innerHTML=days.map(d=>{const key=ymd(d);
     return `<div class="day ${sel.day===key?'on':''}" onclick="pickDay('${key}')"><b>${d.getDate()}</b><small>${d.toLocaleDateString('en-US',{weekday:'short'})}<br>${d.toLocaleDateString('en-US',{month:'short'})}</small></div>`;}).join('');
 }
 function pickDay(key){ sel.day=key; sel.slot=null; renderDays(); renderSlots(); }

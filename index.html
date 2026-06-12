@@ -218,6 +218,7 @@
           <div><label>Odometer</label><input id="v_odo" inputmode="numeric"></div>
           <div><label>Keys / fobs</label><input id="v_keys" inputmode="numeric" placeholder="1"></div>
         </div>
+        <label>Assigned tech</label><select id="v_tech"></select>
       </div>
     </div>
 
@@ -404,6 +405,16 @@
         <div><label>Earliest (days out)</label><input id="bk_lead" inputmode="numeric" placeholder="1"></div>
         <div><label>Show next (days)</label><input id="bk_horizon" inputmode="numeric" placeholder="14"></div>
       </div>
+      <div class="row">
+        <div><label>Max jobs/day (0 = no limit)</label><input id="bk_cap" inputmode="numeric" placeholder="0"></div>
+        <div style="flex:2"><label>Days off (comma-separated dates)</label><input id="bk_black" placeholder="2026-07-04, 2026-12-25"></div>
+      </div>
+      <label>Service times (minutes)</label>
+      <div class="row">
+        <div><label style="font-weight:500">Refresh</label><input id="bk_dur_refresh" inputmode="numeric" placeholder="120"></div>
+        <div><label style="font-weight:500">Full</label><input id="bk_dur_full" inputmode="numeric" placeholder="180"></div>
+        <div><label style="font-weight:500">Restoration</label><input id="bk_dur_restore" inputmode="numeric" placeholder="240"></div>
+      </div>
       <button class="btn sec full" style="margin-top:10px" onclick="saveBooking()">Save availability</button>
       <button class="btn full" style="margin-top:8px" onclick="loadBookings()">View booking requests</button>
       <div id="bookingList" style="margin-top:10px"></div>
@@ -451,18 +462,40 @@
       <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Email messages</summary><div class="muted" style="font-size:13px;padding-bottom:6px">Customize every message under <b>Email messages</b> using tags like {name} and {time}. The "Send outgoing messages" master switch turns all automatic emails off when you need to.</div></details>
       <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Reports</summary><div class="muted" style="font-size:13px;padding-bottom:6px">The <b>📊 Reports</b> tab shows jobs, revenue, average ticket, new vs repeat customers, turnaround time, and where your customers come from.</div></details>
       <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">QuickBooks &amp; deposits</summary><div class="muted" style="font-size:13px;padding-bottom:6px">When QuickBooks is connected, completed jobs create an invoice and file the signed paperwork to the customer's QBO record. For deposits, paste a Square deposit link (made in your Square account) so customers can pay to hold a booking.</div></details>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Schedule &amp; assigning techs</summary><div class="muted" style="font-size:13px;padding-bottom:6px">The <b>📅 Schedule</b> tab shows your day's appointments. Use the arrows to move between days. Assign a tech to each appointment from the dropdown, and tap the status to move it along (Confirmed → In bay → Done). Set service times, daily capacity, and days off under <b>Online booking</b>; those control what customers can book.</div></details>
+      <details><summary style="cursor:pointer;font-weight:600;padding:7px 0">Connecting to your website &amp; tools</summary><div class="muted" style="font-size:13px;padding-bottom:6px">
+        <b>Squarespace (booking):</b> copy your <b>Customer booking link</b> from "Your links &amp; website" above, then in Squarespace add a <b>Button</b> block and paste it — customers book from your site.<br><br>
+        <b>Multiple devices:</b> sign in under <b>Cloud sync &amp; login</b> with the same email on every iPad/phone/computer to share jobs, customers, schedule, and settings.<br><br>
+        <b>Square (deposits):</b> in your Square account make a payment link for your deposit amount, paste it under <b>Deposit (Square)</b>. The booking page sends customers there to pay.<br><br>
+        <b>QuickBooks:</b> once the QuickBooks app is approved, tap <b>Connect QuickBooks</b> and sign into your own books — completed jobs then create invoices and file the signed paperwork.</div></details>
     </div>
   </section>
   <!-- ===== REPORTS ===== -->
   <section id="view-reports" class="hidden">
     <h2 style="margin:6px 0 0">Reports</h2>
     <div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:8px">Use &amp; efficiency at a glance.</div>
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="btn sm" onclick="window.print()">Print / PDF</button>
+      <button class="btn sm sec" onclick="exportReportsCSV()">Download spreadsheet (CSV)</button>
+    </div>
     <div id="reportsBody"></div>
+  </section>
+
+  <!-- ===== SCHEDULE ===== -->
+  <section id="view-schedule" class="hidden">
+    <div style="display:flex;align-items:center;gap:8px;margin:6px 0 12px">
+      <button class="btn ghost sm" onclick="schMove(-1)">‹ Prev</button>
+      <h2 id="schDate" style="flex:1;text-align:center;margin:0;font-size:16px"></h2>
+      <button class="btn ghost sm" onclick="schMove(1)">Next ›</button>
+      <button class="btn sec sm" onclick="schToday()">Today</button>
+    </div>
+    <div id="scheduleBody"></div>
   </section>
 </div>
 
 <nav class="tabbar no-print">
   <button id="tab-jobs" class="on" onclick="showJobs()"><span class="ic">📋</span>Jobs</button>
+  <button id="tab-schedule" onclick="showSchedule()"><span class="ic">📅</span>Schedule</button>
   <button id="tab-new" onclick="startNewJob()"><span class="ic">➕</span>New</button>
   <button id="tab-reports" onclick="showReports()"><span class="ic">📊</span>Reports</button>
   <button id="tab-settings" onclick="showSettings()"><span class="ic">⚙️</span>Settings</button>
@@ -609,8 +642,8 @@ function checkPin(){
 function lockNow(){sessionStorage.removeItem(SESS);session=null;const s=getSettings();if(s.users.length){showLock();}else{alert('Add team members in Settings to enable PIN lock.');}}
 
 /* ============ view switching ============ */
-function showView(id){['jobs','job','detail','settings','reports'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.classList.toggle('hidden',v!==id);});}
-function setTab(t){['jobs','new','settings','reports'].forEach(x=>{const e=document.getElementById('tab-'+x);if(e)e.classList.toggle('on',x===t);});}
+function showView(id){['jobs','job','detail','settings','reports','schedule'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.classList.toggle('hidden',v!==id);});}
+function setTab(t){['jobs','new','settings','reports','schedule'].forEach(x=>{const e=document.getElementById('tab-'+x);if(e)e.classList.toggle('on',x===t);});}
 
 /* ============ jobs list ============ */
 function showJobs(){renderJobs();showView('jobs');setTab('jobs');scrollTop();}
@@ -632,7 +665,7 @@ function renderJobs(){
 function blankJob(){return{id:'j'+Date.now()+Math.random().toString(36).slice(2,6),createdAt:Date.now(),status:'open',
   by:session?session.name:'',customer:{ref:[],newCust:false},vehicle:{size:null},condInt:[],condExt:[],condNotes:'',
   pkg:null,exterior:[],addons:[],svcNotes:'',photoConsent:false,total:0,regTotal:0,photos:[],qc:[],
-  delivery:{checks:[]},sig_intake:'',sig_delivery:''};}
+  delivery:{checks:[]},sig_intake:'',sig_delivery:'',assignedTech:''};}
 function startNewJob(){current=blankJob();step=0;buildJobUI();fillForm(current);renderStep();showView('job');setTab('new');scrollTop();}
 function editCurrent(){if(!current)return;step=0;buildJobUI();fillForm(current);renderStep();showView('job');scrollTop();}
 function cancelJob(){if(confirm('Discard changes to this job?'))showJobs();}
@@ -687,6 +720,7 @@ function fillForm(j){
   val('c_name',c.name);val('c_phone',c.phone);val('c_email',c.email);val('c_addr',c.addr);
   setChips('ref',c.ref);document.getElementById('chip_newcust').classList.toggle('on',!!c.newCust);
   val('v_year',v.year);val('v_make',v.make);val('v_model',v.model);val('v_color',v.color);val('v_plate',v.plate);val('v_vin',v.vin);val('v_odo',v.odo);val('v_keys',v.keys);
+  const tsel=document.getElementById('v_tech'); if(tsel){tsel.innerHTML=['(unassigned)'].concat(teamNames()).map(n=>{const tv=n==='(unassigned)'?'':n;return '<option value="'+esc(tv)+'">'+esc(n)+'</option>';}).join(''); tsel.value=j.assignedTech||'';}
   pickSize(v.size,true);
   setChips('ci',j.condInt);setChips('ce',j.condExt);val('cond_notes',j.condNotes);
   val('svc_notes',j.svcNotes);
@@ -702,6 +736,7 @@ function collectForm(){
   j.customer.name=gv('c_name');j.customer.phone=gv('c_phone');j.customer.email=gv('c_email');j.customer.addr=gv('c_addr');
   j.vehicle.year=gv('v_year');j.vehicle.make=gv('v_make');j.vehicle.model=gv('v_model');j.vehicle.color=gv('v_color');
   j.vehicle.plate=gv('v_plate');j.vehicle.vin=gv('v_vin');j.vehicle.odo=gv('v_odo');j.vehicle.keys=gv('v_keys');
+  j.assignedTech=gv('v_tech');
   j.condNotes=gv('cond_notes');j.svcNotes=gv('svc_notes');
   j.delivery.concerns=gv('d_concerns');j.delivery.pay=gv('d_pay');j.delivery.paid=gv('d_paid');
   j.sig_intake=getSig('sig_intake');j.sig_delivery=getSig('sig_delivery');
@@ -860,6 +895,7 @@ function renderDetail(){
     <div class="kv"><span>Plate</span><span>${esc(v.plate||'')}</span></div>
     <div class="kv"><span>Odometer</span><span>${esc(v.odo||'')}</span></div>
     <div class="kv"><span>Keys received</span><span>${esc(v.keys||'')}</span></div>
+    <div class="kv"><span>Assigned tech</span><span>${esc(j.assignedTech||'—')}</span></div>
     <div class="kv"><span>Intake by</span><span>${esc(j.by||'')}</span></div>
     <div class="kv"><span>Date in</span><span>${new Date(j.createdAt).toLocaleString()}</span></div>
   </div>
@@ -1092,6 +1128,13 @@ function showReports(){renderReports();showView('reports');setTab('reports');scr
 function rTile(label,val){return `<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;flex:1;min-width:120px"><div style="font-size:24px;font-weight:800">${val}</div><div class="muted" style="font-size:12px">${label}</div></div>`;}
 function rBars(obj,money){const ks=Object.keys(obj);if(!ks.length)return '<div class="muted">No data yet.</div>';const mx=Math.max.apply(null,ks.map(k=>obj[k]))||1;return ks.map(k=>`<div style="margin:7px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(k)}</span><span>${money?'$'+moneyf(obj[k]):obj[k]}</span></div><div style="height:8px;background:var(--panel2);border-radius:6px;overflow:hidden;margin-top:3px"><div style="height:100%;width:${Math.round(obj[k]/mx*100)}%;background:var(--brand)"></div></div></div>`).join('');}
 function moneyf(n){return Math.round(n||0).toLocaleString('en-US');}
+function exportReportsCSV(){
+  const done=loadJobs().filter(j=>j.status==='done').sort((a,b)=>(a.deliveredAt||a.createdAt)-(b.deliveredAt||b.createdAt));
+  const rows=[['Date','Customer','Phone','Vehicle','Size','Package','Add-ons','Total','Tech','Source']];
+  done.forEach(j=>{const v=j.vehicle||{},c=j.customer||{};rows.push([new Date(j.deliveredAt||j.createdAt).toLocaleDateString(),c.name||'',c.phone||'',[v.year,v.make,v.model].filter(Boolean).join(' '),sizeLabel(v.size),(PACKAGES.find(p=>p.id===j.pkg)||{}).name||'',(j.addons||[]).map(id=>(ADDONS.find(a=>a.id===id)||{}).name).filter(Boolean).join('; '),j.total||0,j.assignedTech||'',(c.ref||[]).join('; ')]);});
+  const csv=rows.map(r=>r.map(x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ntp-report-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
 function renderReports(){
   const done=loadJobs().filter(j=>j.status==='done');
   const now=Date.now(),d=new Date();const mStart=new Date(d.getFullYear(),d.getMonth(),1).getTime();const wStart=now-6*864e5;
@@ -1119,12 +1162,62 @@ function renderReports(){
 
 /* ============ online booking (owner side) ============ */
 const DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-let bookingCfg={openHour:9,closeHour:17,slotMins:120,leadDays:1,horizonDays:14,openDays:[1,2,3,4,5,6]};
+let bookingCfg={openHour:9,closeHour:17,slotMins:120,leadDays:1,horizonDays:14,openDays:[1,2,3,4,5,6],capacity:0,blackouts:[],durations:{refresh:120,full:180,restore:240}};
 let _bookings=[];
 async function loadTenantSettings(){
   if(!sb||!cloudTenant)return;
-  try{ const {data}=await sb.from('tenants').select('settings').eq('id',cloudTenant).maybeSingle(); if(data&&data.settings&&data.settings.booking){ bookingCfg=Object.assign(bookingCfg,data.settings.booking); } }catch(e){}
+  try{ const {data}=await sb.from('tenants').select('settings').eq('id',cloudTenant).maybeSingle();
+    if(data&&data.settings){const st=data.settings;
+      if(st.booking)bookingCfg=Object.assign(bookingCfg,st.booking);
+      const s=getSettings();let ch=false;
+      if(st.templates){s.templates=st.templates;ch=true;}
+      if(st.square){s.square=st.square;ch=true;}
+      if(st.pricing){s.pricing=st.pricing;ch=true;}
+      if(st.teamNames){s.teamNames=st.teamNames;ch=true;}
+      if(ch)setSettings(s);
+    }
+  }catch(e){}
 }
+function teamNames(){const s=getSettings();return [...new Set([...((s.users||[]).map(u=>u.name)),...(s.teamNames||[])].filter(Boolean))];}
+
+/* ============ schedule ============ */
+let schDay=new Date(); let _sched=[];
+function showSchedule(){renderSchedule();showView('schedule');setTab('schedule');scrollTop();}
+function schMove(n){schDay.setDate(schDay.getDate()+n);renderSchedule();}
+function schToday(){schDay=new Date();renderSchedule();}
+async function renderSchedule(){
+  const body=document.getElementById('scheduleBody'),hd=document.getElementById('schDate');
+  if(hd)hd.textContent=schDay.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+  if(!body)return;
+  if(!cloudUser||!cloudTenant){body.innerHTML='<div class="muted">Sign in to cloud (Settings → Cloud sync) to use the schedule across devices.</div>';return;}
+  body.innerHTML='<div class="muted">Loading…</div>';
+  const d0=new Date(schDay);d0.setHours(0,0,0,0);const d1=new Date(d0);d1.setDate(d1.getDate()+1);
+  const {data,error}=await sb.from('bookings').select('*').eq('tenant_id',cloudTenant).gte('slot_start',d0.toISOString()).lt('slot_start',d1.toISOString()).neq('status','declined').order('slot_start',{ascending:true});
+  if(error){body.innerHTML='<div class="muted">Error: '+esc(error.message)+'</div>';return;}
+  _sched=data||[];
+  if(!_sched.length){body.innerHTML='<div class="muted">No appointments this day. Confirmed booking requests show up here.</div>';return;}
+  const techs=teamNames();
+  const stColor={requested:'var(--warn)',booked:'var(--brand)',in_bay:'#a855f7',done:'var(--good)'};
+  body.innerHTML=_sched.map(b=>{
+    const t=new Date(b.slot_start);const time=t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    const pkg=(PACKAGES.find(p=>p.id===b.package_id)||{}).name||b.package_id||'';
+    const dur=(bookingCfg.durations&&bookingCfg.durations[b.package_id])||'';
+    const col=stColor[b.status]||'var(--line)';
+    const opts=['(unassigned)'].concat(techs).map(n=>{const val=n==='(unassigned)'?'':n;return `<option ${((b.assigned_tech||'')===val)?'selected':''} value="${esc(val)}">${esc(n)}</option>`;}).join('');
+    return `<div class="card" style="margin:8px 0;border-left:4px solid ${col}">
+      <div style="display:flex;justify-content:space-between"><b style="font-size:16px">${time}</b><span class="pill ${b.status==='done'?'done':(b.status==='requested'?'open':'prog')}">${esc(b.status)}</span></div>
+      <div style="font-weight:600;margin-top:2px">${esc(b.name||'')} <span class="muted" style="font-weight:400;font-size:13px">${esc(b.phone||'')}</span></div>
+      <div style="font-size:14px">${esc(pkg)}${b.vehicle?' · '+esc(b.vehicle):''}${dur?' · '+dur+' min':''}${b.price?' · $'+b.price:''}</div>
+      <div style="margin-top:8px"><label style="margin:0 0 4px">Tech</label><select onchange="setApptTech('${b.id}',this.value)">${opts}</select></div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        ${b.status==='requested'?`<button class="btn sm" onclick="setApptStatus('${b.id}','booked')">Confirm</button>`:''}
+        ${b.status!=='in_bay'&&b.status!=='done'?`<button class="btn sm sec" onclick="setApptStatus('${b.id}','in_bay')">In bay</button>`:''}
+        ${b.status!=='done'?`<button class="btn sm good" onclick="setApptStatus('${b.id}','done')">Done</button>`:''}
+      </div></div>`;
+  }).join('');
+}
+async function setApptTech(id,name){ try{await sb.from('bookings').update({assigned_tech:name||null}).eq('id',id);}catch(e){} }
+async function setApptStatus(id,st){ try{await sb.from('bookings').update({status:st}).eq('id',id);}catch(e){} renderSchedule(); }
 function showBookingUI(){
   const wrap=document.getElementById('bookingLinkWrap'); if(!wrap)return;
   if(cloudUser&&cloudTenant){
@@ -1133,18 +1226,23 @@ function showBookingUI(){
   } else { wrap.textContent='Sign in to cloud (above) to get your booking link.'; }
   const dd=document.getElementById('bkDays'); if(dd)dd.innerHTML=DAYNAMES.map((d,i)=>`<div class="chip ${bookingCfg.openDays.includes(i)?'on':''}" onclick="toggleBkDay(${i})"><div class="bx">${bookingCfg.openDays.includes(i)?'✓':''}</div><span>${d}</span></div>`).join('');
   val('bk_open',bookingCfg.openHour);val('bk_close',bookingCfg.closeHour);val('bk_slot',bookingCfg.slotMins);val('bk_lead',bookingCfg.leadDays);val('bk_horizon',bookingCfg.horizonDays);
+  val('bk_cap',bookingCfg.capacity||0);val('bk_black',(bookingCfg.blackouts||[]).join(', '));
+  const du=bookingCfg.durations||{};val('bk_dur_refresh',du.refresh||120);val('bk_dur_full',du.full||180);val('bk_dur_restore',du.restore||240);
 }
 function toggleBkDay(i){ const s=new Set(bookingCfg.openDays); s.has(i)?s.delete(i):s.add(i); bookingCfg.openDays=[...s].sort(); showBookingUI(); }
 function copyText(t){ try{navigator.clipboard.writeText(t);}catch(e){} alert('Copied:\n'+t); }
 async function saveBooking(){
   if(!cloudUser||!cloudTenant){alert('Sign in to cloud first (the card above).');return;}
   bookingCfg.openHour=parseInt(gv('bk_open'))||9; bookingCfg.closeHour=parseInt(gv('bk_close'))||17; bookingCfg.slotMins=parseInt(gv('bk_slot'))||120; bookingCfg.leadDays=parseInt(gv('bk_lead'))||1; bookingCfg.horizonDays=parseInt(gv('bk_horizon'))||14;
+  bookingCfg.capacity=parseInt(gv('bk_cap'))||0;
+  bookingCfg.blackouts=gv('bk_black').split(',').map(x=>x.trim()).filter(Boolean);
+  bookingCfg.durations={refresh:parseInt(gv('bk_dur_refresh'))||120,full:parseInt(gv('bk_dur_full'))||180,restore:parseInt(gv('bk_dur_restore'))||240};
   await pushTenantSettings(); alert('Availability saved — your booking page is live.');
 }
 async function pushTenantSettings(){
   if(!sb||!cloudUser||!cloudTenant)return;
   const s=getSettings();
-  try{ await sb.from('tenants').update({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing,booking:bookingCfg,templates:s.templates,square:s.square}}).eq('id',cloudTenant); }catch(e){console.error('pushTenant',e);}
+  try{ await sb.from('tenants').update({name:s.name,address:s.addr,phone:s.phone,email:s.email,logo_url:s.logoUrl,discount_pct:s.discount||0,settings:{pricing:s.pricing,booking:bookingCfg,templates:s.templates,square:s.square,teamNames:(s.users||[]).map(u=>u.name)}}).eq('id',cloudTenant); }catch(e){console.error('pushTenant',e);}
 }
 async function loadBookings(){
   const box=document.getElementById('bookingList');
